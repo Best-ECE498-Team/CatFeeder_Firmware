@@ -18,7 +18,8 @@
  * Includes
  *============================================================================*/
 #include "tec_driver.h"
-
+#include "ir_thermometer_driver.h"
+#include "ntc_thermistor_driver.h"
 
 /*=============================================================================
  * Private Macros
