@@ -1,9 +1,9 @@
 /******************************************************************************
- * @file    system_task.h
+ * @file    comm_pi_task.c
  * @brief
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
- * @course  University of Waterloo ECE498 Engineering Design Project
+ * @course  ECE 498 Engineering Design Project
  * @team    Team 53
  * @authors
  *
@@ -14,39 +14,50 @@
  *
  ******************************************************************************/
 
-#ifndef SYSTEM_MANAGER_INC_SYSTEM_TASK_H_
-#define SYSTEM_MANAGER_INC_SYSTEM_TASK_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*=============================================================================
  * Includes
  *============================================================================*/
+#include "cmsis_os.h"
+#include "vcp_debug.h"
 
 /*=============================================================================
- * Public Macros
+ * Private Macros
  *============================================================================*/
-
 
 /*=============================================================================
- * Public Type Definitions
+ * Private Type Definitions
  *============================================================================*/
-
 
 /*=============================================================================
- * Public Constants
+ * Private Variables
  *============================================================================*/
-
 
 /*=============================================================================
- * Public Function Prototypes
+ * Private Function Prototypes
  *============================================================================*/
-void StartSystemTask(void *argument);
+void StartPiCommTask(void *argument);
 
-#ifdef __cplusplus
+/*=============================================================================
+ * Private Function Definitions
+ *============================================================================*/
+
+/**
+ * @brief Function implementing the PiCommTask thread.
+ *
+ * @param[in]  Not used
+ * @param[out] Not used
+ *
+ * @return Not used
+ */
+void StartPiCommTask(void *argument)
+{
+
+  uint32_t ulCount = 0;
+
+  /* Infinite loop */
+  for (;;)
+  {
+    osDelay(100);
+  }
+
 }
-#endif
-
-#endif /* SYSTEM_MANAGER_INC_SYSTEM_TASK_H_ */

@@ -47,17 +47,17 @@
 /* USER CODE BEGIN Variables */
 
 /* USER CODE END Variables */
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
+/* Definitions for SystemTask */
+osThreadId_t SystemTaskHandle;
+const osThreadAttr_t SystemTask_attributes = {
+  .name = "SystemTask",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
+  .stack_size = 512 * 4
 };
-/* Definitions for CommTask */
-osThreadId_t CommTaskHandle;
-const osThreadAttr_t CommTask_attributes = {
-  .name = "CommTask",
+/* Definitions for PiCommTask */
+osThreadId_t PiCommTaskHandle;
+const osThreadAttr_t PiCommTask_attributes = {
+  .name = "PiCommTask",
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 512 * 4
 };
@@ -75,12 +75,12 @@ const osThreadAttr_t FeedingTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
   .stack_size = 512 * 4
 };
-/* Definitions for SystemTask */
-osThreadId_t SystemTaskHandle;
-const osThreadAttr_t SystemTask_attributes = {
-  .name = "SystemTask",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 512 * 4
+/* Definitions for DebugCommTask */
+osThreadId_t DebugCommTaskHandle;
+const osThreadAttr_t DebugCommTask_attributes = {
+  .name = "DebugCommTask",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 1024 * 4
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,11 +88,11 @@ const osThreadAttr_t SystemTask_attributes = {
 
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void *argument);
-void StartCommunicationTask(void *argument);
+void StartSystemTask(void *argument);
+void StartPiCommTask(void *argument);
 void StartThermalTask(void *argument);
 void StartFeedingTask(void *argument);
-void StartSystemTask(void *argument);
+void StartDebugCommTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -152,11 +152,11 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  /* creation of SystemTask */
+  SystemTaskHandle = osThreadNew(StartSystemTask, NULL, &SystemTask_attributes);
 
-  /* creation of CommTask */
-  CommTaskHandle = osThreadNew(StartCommunicationTask, NULL, &CommTask_attributes);
+  /* creation of PiCommTask */
+  PiCommTaskHandle = osThreadNew(StartPiCommTask, NULL, &PiCommTask_attributes);
 
   /* creation of ThermalTask */
   ThermalTaskHandle = osThreadNew(StartThermalTask, NULL, &ThermalTask_attributes);
@@ -164,8 +164,8 @@ void MX_FREERTOS_Init(void) {
   /* creation of FeedingTask */
   FeedingTaskHandle = osThreadNew(StartFeedingTask, NULL, &FeedingTask_attributes);
 
-  /* creation of SystemTask */
-  SystemTaskHandle = osThreadNew(StartSystemTask, NULL, &SystemTask_attributes);
+  /* creation of DebugCommTask */
+  DebugCommTaskHandle = osThreadNew(StartDebugCommTask, NULL, &DebugCommTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -177,51 +177,40 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_StartSystemTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-__weak void StartDefaultTask(void *argument)
-{
-  /* USER CODE BEGIN StartDefaultTask */
-  /* Infinite loop */
-  for(;;)
-  {
-//    /* -- Sample board code for User push-button in interrupt mode ---- */
-//    if (BspButtonState == BUTTON_PRESSED)
-//    {
-//      /* Update button state */
-//      BspButtonState = BUTTON_RELEASED;
-//      /* -- Sample board code to toggle led ---- */
-//      BSP_LED_Toggle(LED_GREEN);
-//
-//      /* ..... Perform your action ..... */
-//    }
-
-    osDelay(1);
-  }
-  /* USER CODE END StartDefaultTask */
-}
-
-/* USER CODE BEGIN Header_StartCommunicationTask */
-/**
-* @brief Function implementing the CommTask thread.
+* @brief Function implementing the SystemTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartCommunicationTask */
-__weak void StartCommunicationTask(void *argument)
+/* USER CODE END Header_StartSystemTask */
+__weak void StartSystemTask(void *argument)
 {
-  /* USER CODE BEGIN StartCommunicationTask */
+  /* USER CODE BEGIN StartSystemTask */
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END StartCommunicationTask */
+  /* USER CODE END StartSystemTask */
+}
+
+/* USER CODE BEGIN Header_StartPiCommTask */
+/**
+* @brief Function implementing the PiCommTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartPiCommTask */
+__weak void StartPiCommTask(void *argument)
+{
+  /* USER CODE BEGIN StartPiCommTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartPiCommTask */
 }
 
 /* USER CODE BEGIN Header_StartThermalTask */
@@ -260,22 +249,22 @@ __weak void StartFeedingTask(void *argument)
   /* USER CODE END StartFeedingTask */
 }
 
-/* USER CODE BEGIN Header_StartSystemTask */
+/* USER CODE BEGIN Header_StartDebugCommTask */
 /**
-* @brief Function implementing the SystemTask thread.
+* @brief Function implementing the DebugCommTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartSystemTask */
-__weak void StartSystemTask(void *argument)
+/* USER CODE END Header_StartDebugCommTask */
+__weak void StartDebugCommTask(void *argument)
 {
-  /* USER CODE BEGIN StartSystemTask */
+  /* USER CODE BEGIN StartDebugCommTask */
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END StartSystemTask */
+  /* USER CODE END StartDebugCommTask */
 }
 
 /* Private application code --------------------------------------------------*/

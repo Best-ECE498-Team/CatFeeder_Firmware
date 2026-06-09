@@ -1,5 +1,5 @@
 /******************************************************************************
- * @file    communication_task.c
+ * @file    comm_module.c
  * @brief   
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
@@ -17,9 +17,7 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "communication_task.h"
-#include "communication_module.h"
-#include "cmsis_os.h"
+#include "comm_module.h"
 
 /*=============================================================================
  * Private Macros
@@ -46,28 +44,6 @@
  *============================================================================*/
 
 /**
- * @brief Function implementing the CommTask thread
- *
- * @param[in]  None
- * @param[out] None
- *
- * @return None
- */
-void StartCommunicationTask(void *argument)
-{
-
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-}
-
-/*=============================================================================
- * Private Function Definitions
- *============================================================================*/
-
-/**
  * @brief
  *
  * @details
@@ -77,3 +53,8 @@ void StartCommunicationTask(void *argument)
  *
  * @return
  */
+
+/*=============================================================================
+ * Private Function Definitions
+ *============================================================================*/
+
