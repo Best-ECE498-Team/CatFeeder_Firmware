@@ -17,9 +17,9 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "system_task.h"
 #include "system_manager.h"
 #include "cmsis_os.h"
+#include "stm32g4xx_nucleo.h"
 
 /*=============================================================================
  * Private Macros
@@ -34,12 +34,12 @@
 /*=============================================================================
  * Private Variables
  *============================================================================*/
-
+extern uint32_t BspButtonState;
 
 /*=============================================================================
  * Private Function Prototypes
  *============================================================================*/
-
+void StartSystemTask(void *argument);
 
 /*=============================================================================
  * Public Function Definitions
@@ -59,7 +59,14 @@ void StartSystemTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    /* -- Sample board code for User push-button in interrupt mode ---- */
+    if (BspButtonState == BUTTON_PRESSED)
+    {
+      BspButtonState = BUTTON_RELEASED;
+      BSP_LED_Toggle(LED_GREEN);
+    }
+
+    osDelay(10);
   }
 
 }

@@ -1,5 +1,5 @@
 /******************************************************************************
- * @file    communication_module.c
+ * @file    comm_debug_task.c
  * @brief   
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
@@ -17,8 +17,8 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "communication_module.h"
-
+#include "vcp_debug.h"
+#include "cmsis_os.h"
 
 /*=============================================================================
  * Private Macros
@@ -38,34 +38,35 @@
 /*=============================================================================
  * Private Function Prototypes
  *============================================================================*/
-
-
-/*=============================================================================
- * Public Function Definitions
- *============================================================================*/
-
-/**
- * @brief
- *
- * @details
- *
- * @param[in]
- * @param[out]
- *
- * @return
- */
+void StartDebugCommTask(void *argument);
 
 /*=============================================================================
  * Private Function Definitions
  *============================================================================*/
 
 /**
- * @brief
+ * @brief Function implementing the DebugCommTask thread.
  *
- * @details
+ * @param[in]  Not used
+ * @param[out] Not used
  *
- * @param[in]
- * @param[out]
- *
- * @return
+ * @return Not used
  */
+void StartDebugCommTask(void *argument)
+{
+  /* USER CODE BEGIN StartDebugCommTask */
+  VcpDebug_Init();
+  uint32_t ulCount = 0;
+  /* Infinite loop */
+  for(;;)
+  {
+    ulCount += 1;
+    DPRINTF_ERROR(DBG_MASK_FEEDING, "Error From DebugCommTask Count: %u\r\n", ulCount);
+    DPRINTF_WARN(DBG_MASK_COMM, "Warn From DebugCommTask Count: %u\r\n", ulCount);
+    DPRINTF_INFO(DBG_MASK_SYSTEM, "Info From DebugCommTask Count: %u\r\n", ulCount);
+    DPRINTF_DEBUG(DBG_MASK_THERMAL, "Debug From DebugCommTask Count: %u\r\n", ulCount);
+    DPRINTF_TRACE(DBG_MASK_SYSTEM, "Trace From DebugCommTask Count: %u\r\n", ulCount);
+    osDelay(100);
+  }
+  /* USER CODE END StartDebugCommTask */
+}

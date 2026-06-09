@@ -4,6 +4,7 @@
 
 **/Debug/
 **/Release/
+**/Demo/
 
 **/.settings/
 **/.externalToolBuilders/
@@ -53,7 +54,19 @@ __pycache__/
 *.pyd
 
 venv/
+.venv/
 .env/
+
+# =========================================================
+# CatTerminal Python App
+# =========================================================
+
+CatTerminal/.venv/
+CatTerminal/build/
+CatTerminal/dist/
+CatTerminal/__pycache__/
+CatTerminal/*.spec
+CatTerminal/*.exe
 
 # =========================================================
 # OS Files

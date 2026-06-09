@@ -1,5 +1,5 @@
 /******************************************************************************
- * @file    communication_module.h
+ * @file    comm_module.h
  * @brief
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
@@ -14,8 +14,8 @@
  *
  ******************************************************************************/
 
-#ifndef COMMUNICATION_MODULE_INC_COMMUNICATION_MODULE_H_
-#define COMMUNICATION_MODULE_INC_COMMUNICATION_MODULE_H_
+#ifndef COMMUNICATION_MODULE_INC_COMM_MODULE_H_
+#define COMMUNICATION_MODULE_INC_COMM_MODULE_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,4 +48,4 @@ extern "C" {
 }
 #endif
 
-#endif /* COMMUNICATION_MODULE_INC_COMMUNICATION_MODULE_H_ */
+#endif /* COMMUNICATION_MODULE_INC_COMM_MODULE_H_ */

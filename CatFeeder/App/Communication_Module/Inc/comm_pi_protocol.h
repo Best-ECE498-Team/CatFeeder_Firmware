@@ -1,5 +1,5 @@
 /******************************************************************************
- * @file    communication_task.h
+ * @file    comm_pi_protocol.h
  * @brief
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
@@ -14,8 +14,8 @@
  *
  ******************************************************************************/
 
-#ifndef COMMUNICATION_MODULE_INC_COMMUNICATION_TASK_H_
-#define COMMUNICATION_MODULE_INC_COMMUNICATION_TASK_H_
+#ifndef COMMUNICATION_MODULE_INC_COMM_PI_PROTOCOL_H_
+#define COMMUNICATION_MODULE_INC_COMM_PI_PROTOCOL_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,10 +43,9 @@ extern "C" {
 /*=============================================================================
  * Public Function Prototypes
  *============================================================================*/
-void StartCommunicationTask(void *argument);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* COMMUNICATION_MODULE_INC_COMMUNICATION_TASK_H_ */
+#endif /* COMMUNICATION_MODULE_INC_COMM_PI_PROTOCOL_H_ */
