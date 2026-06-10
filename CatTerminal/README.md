@@ -1,11 +1,3 @@
-# STM32 Debug Console Starter
-
-This is a small Python/Tkinter UI based on your sketch:
-
-- Top bar: COM port selector, baud rate, Start/Stop, Clear, Print/autoscroll, timestamp toggle
-- Middle: large debug print/log window
-- Bottom: command input for sending text to the STM32 UART
-
 ## Setup
 
 Install Python 3.11+ from <https://www.python.org/downloads/> if `python --version` does not work in PowerShell.
@@ -41,5 +33,3 @@ The finished app will be:
 ```text
 dist\CatTerminal.exe
 ```
-
-Other users do not need to install Python to run that `.exe`. They may still need the correct USB serial/ST-Link driver for the STM32 board.
