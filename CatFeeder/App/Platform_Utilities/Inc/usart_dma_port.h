@@ -1,6 +1,6 @@
 /******************************************************************************
  * @file    usart_dma_port.h
- * @brief
+ * @brief   UART DMA port interface.
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
  * @course  University of Waterloo ECE498 Engineering Design Project
@@ -25,8 +25,9 @@ extern "C"
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "main.h"
-#include <stdint.h>
+#include "stm32g4xx_hal.h"
+#include <stdbool.h>
+#include "cmsis_os.h"
 
 /*=============================================================================
 * Public Macros
@@ -42,30 +43,37 @@ typedef struct
   DMA_HandleTypeDef *pstHdmaTx;      /**< UART TX DMA handle */
 
   uint8_t *paucRxBuf;                /**< DMA RX buffer */
-  uint16_t usRxSize;                 /**< RX buffer size */
+  uint16_t usRxSize;                 /**< RX buffer size, must be power of 2 */
 
   uint8_t *paucTxBuf;                /**< TX ring buffer */
-  uint16_t usTxSize;                 /**< TX buffer size */
+  uint16_t usTxSize;                 /**< TX buffer size, must be power of 2 */
 
-  volatile uint16_t usTxHead;        /**< TX write index */
-  volatile uint16_t usTxTail;        /**< TX read index */
+  volatile uint16_t usTxHead;        /**< TX DMA write index */
+  volatile uint16_t usTxTail;        /**< TX API read index */
 
-  volatile uint8_t ucTxDmaActive;    /**< TX DMA transfer active */
+  volatile uint16_t usRxHead;        /**< RX DMA write index */
+  volatile uint16_t usRxTail;        /**< RX API read index */
+
+  volatile bool bTxDmaActive;        /**< TX DMA transfer active */
   uint16_t txDmaLen;                 /**< Current DMA TX length */
-} UartDmaPortTypedef;
+  
+  osEventFlagsId_t hEventFlags;      /**< Event flags for signaling between DMA ISR and API */
+} UartDmaPortTypeDef;
 
 /*=============================================================================
 * Public Constants
 *============================================================================*/
+#define UART_DMA_PORT_TX_COMPLETE_FLAG (1U << 0)      /**< Event flag indicating DMA TX completion */
+#define UART_DMA_PORT_RX_EVENT_FLAG    (1U << 1)      /**< Event flag indicating DMA RX event (idle line) */
+#define UART_DMA_PORT_EVENT_FLAGS_MAX  (1U << 24 - 1) /**< Maximum event flags supported by FreeRTOS */
 
 /*=============================================================================
 * Public Function Prototypes
 *============================================================================*/
-HAL_StatusTypeDef UartDmaPort_Init(UartDmaPortTypedef *pstPort_);
-uint16_t UartDmaPort_Write(UartDmaPortTypedef *pstPort_, const uint8_t *paucData_, uint16_t usLen_);
-uint16_t UartDmaPort_WriteString(UartDmaPortTypedef *pstPort_, const char *pcString_);
-void UartDmaPort_TxCpltCallback(UartDmaPortTypedef *pstPort_, UART_HandleTypeDef *pstUart_);
-void UartDmaPort_RxEventCallback(UartDmaPortTypedef *pstPort_, UART_HandleTypeDef *pstUart_, uint16_t usSize_);
+HAL_StatusTypeDef UartDmaPort_Init(UartDmaPortTypeDef *pstPort_);
+uint16_t UartDmaPort_Read(UartDmaPortTypeDef *pstPort_, uint8_t *paucData_, uint16_t usLen_);
+uint16_t UartDmaPort_Write(UartDmaPortTypeDef *pstPort_, const uint8_t *paucData_, uint16_t usLen_);
+uint16_t UartDmaPort_WriteString(UartDmaPortTypeDef *pstPort_, const char *pcString_);
 
 #ifdef __cplusplus
 }

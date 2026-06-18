@@ -120,7 +120,7 @@ class DebugApp(tk.Tk):
         self.port_var = tk.StringVar()
         self.baud_var = tk.StringVar(value="460800")
         self.command_var = tk.StringVar()
-        self.line_ending_var = tk.StringVar(value="\\n")
+        self.line_ending_var = tk.StringVar(value="\\0")
         self.autoscroll_var = tk.BooleanVar(value=True)
         self.timestamp_var = tk.BooleanVar(value=True)
 
@@ -202,7 +202,7 @@ class DebugApp(tk.Tk):
         ttk.Combobox(
             command_bar,
             textvariable=self.line_ending_var,
-            values=("\\n", "\\r", "\\r\\n", "none"),
+            values=("\\0", "\\n", "\\r", "\\r\\n", "none"),
             width=7,
             state="readonly",
         ).grid(row=0, column=3)

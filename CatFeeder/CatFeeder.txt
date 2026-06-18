@@ -1,0 +1,84 @@
+Configuration	CatFeeder
+STM32CubeMX 	6.17.0
+Date	06/13/2026
+MCU	STM32G474RETx
+
+
+
+PERIPHERALS	MODES	FUNCTIONS	PINS
+LPUART1	Asynchronous	LPUART1_RX	PA3
+LPUART1	Asynchronous	LPUART1_TX	PA2
+RCC	Crystal/Ceramic Resonator	RCC_OSC_IN	PF0-OSC_IN
+RCC	Crystal/Ceramic Resonator	RCC_OSC_OUT	PF1-OSC_OUT
+RCC	Crystal/Ceramic Resonator	RCC_OSC32_IN	PC14-OSC32_IN
+RCC	Crystal/Ceramic Resonator	RCC_OSC32_OUT	PC15-OSC32_OUT
+SYS	Trace Asynchronous Sw	SYS_JTMS-SWDIO	PA13
+SYS	Trace Asynchronous Sw	SYS_JTCK-SWCLK	PA14
+SYS	Trace Asynchronous Sw	SYS_JTDO-SWO	PB3
+SYS	TIM7	SYS_VS_tim7	VP_SYS_VS_tim7
+SYS	Dead Battery Signals disabled	SYS_VS_DBSignals	VP_SYS_VS_DBSignals
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+3	PC14-OSC32_IN	RCC_OSC32_IN	RCC_OSC32_IN
+4	PC15-OSC32_OUT	RCC_OSC32_OUT	RCC_OSC32_OUT
+5	PF0-OSC_IN	RCC_OSC_IN	RCC_OSC_IN
+6	PF1-OSC_OUT	RCC_OSC_OUT	RCC_OSC_OUT
+14	PA2	LPUART1_TX	DBG_LPUART1_TX
+17	PA3	LPUART1_RX	DBG_LPUART1_RX
+49	PA13	SYS_JTMS-SWDIO	T_SWDIO
+50	PA14	SYS_JTCK-SWCLK	T_SWCLK
+56	PB3	SYS_JTDO-SWO	T_SWO
+PERIPHERALS	MODES	FUNCTIONS	PINS
+LPUART1	Asynchronous	LPUART1_RX	PA3
+LPUART1	Asynchronous	LPUART1_TX	PA2
+RCC	Crystal/Ceramic Resonator	RCC_OSC_IN	PF0-OSC_IN
+RCC	Crystal/Ceramic Resonator	RCC_OSC_OUT	PF1-OSC_OUT
+RCC	Crystal/Ceramic Resonator	RCC_OSC32_IN	PC14-OSC32_IN
+RCC	Crystal/Ceramic Resonator	RCC_OSC32_OUT	PC15-OSC32_OUT
+SYS	Trace Asynchronous Sw	SYS_JTMS-SWDIO	PA13
+SYS	Trace Asynchronous Sw	SYS_JTCK-SWCLK	PA14
+SYS	Trace Asynchronous Sw	SYS_JTDO-SWO	PB3
+SYS	TIM7	SYS_VS_tim7	VP_SYS_VS_tim7
+SYS	Dead Battery Signals disabled	SYS_VS_DBSignals	VP_SYS_VS_DBSignals
+
+
+
+Pin Nb	PINs	FUNCTIONs	LABELs
+3	PC14-OSC32_IN	RCC_OSC32_IN	RCC_OSC32_IN
+4	PC15-OSC32_OUT	RCC_OSC32_OUT	RCC_OSC32_OUT
+5	PF0-OSC_IN	RCC_OSC_IN	RCC_OSC_IN
+6	PF1-OSC_OUT	RCC_OSC_OUT	RCC_OSC_OUT
+14	PA2	LPUART1_TX	DBG_LPUART1_TX
+17	PA3	LPUART1_RX	DBG_LPUART1_RX
+49	PA13	SYS_JTMS-SWDIO	T_SWDIO
+50	PA14	SYS_JTCK-SWCLK	T_SWCLK
+56	PB3	SYS_JTDO-SWO	T_SWO
+
+
+
+SOFTWARE PROJECT
+
+Project Settings : 
+Project Name : CatFeeder
+Project Folder : C:\Users\Bowen\Documents\GitHub\CatFeeder_Firmware\CatFeeder
+Toolchain / IDE : STM32CubeIDE
+Firmware Package Name and Version : STM32Cube FW_G4 V1.6.2
+
+
+Code Generation Settings : 
+STM32Cube MCU packages and embedded software packs : Copy only the necessary library files
+Generate peripheral initialization as a pair of '.c/.h' files per peripheral : Yes
+Backup previously generated files when re-generating : Yes
+Delete previously generated files when not re-generated : Yes
+Set all free pins as analog (to optimize the power consumption) : No
+
+
+Toolchains Settings : 
+Compiler Optimizations : 
+
+
+
+
+

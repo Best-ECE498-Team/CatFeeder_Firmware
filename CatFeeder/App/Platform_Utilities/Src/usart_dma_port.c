@@ -1,6 +1,6 @@
 /******************************************************************************
  * @file    usart_dma_port.c
- * @brief
+ * @brief   UART DMA port implementation.
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
  * @course  ECE 498 Engineering Design Project
@@ -22,7 +22,8 @@
 /*=============================================================================
  * Private Macros
  *============================================================================*/
-#define UART_DMA_PORT_MAX_PORTS (4U)
+#define UART_DMA_PORT_MAX_PORTS      (4U)
+#define IS_SIZE_POWER_OF_TWO(size_)  (((size_) != 0U) && (((size_) & ((size_) - 1U)) == 0U))
 
 /*=============================================================================
  * Private Type Definitions
@@ -31,21 +32,24 @@
 /*=============================================================================
  * Private Variables
  *============================================================================*/
-static UartDmaPortTypedef *apstTheUartDmaPorts[UART_DMA_PORT_MAX_PORTS];
+static UartDmaPortTypeDef *pastTheUartDmaPorts[UART_DMA_PORT_MAX_PORTS];
 
 /*=============================================================================
  * Private Function Prototypes
  *============================================================================*/
-static HAL_StatusTypeDef StartUartDmaPortTransfer(UartDmaPortTypedef *pstPort_, uint8_t *paucData_, uint16_t usLen_);
-static HAL_StatusTypeDef EnableUartDmaPortReceive(UartDmaPortTypedef *pstPort_);
-static void TryStartUartDmaPortTx(UartDmaPortTypedef *pstPort_);
-static uint16_t GetUartDmaPortTxFreeSpace(UartDmaPortTypedef *pstPort_);
-static uint16_t AdvanceUartDmaPortIndex(UartDmaPortTypedef *pstPort_, uint16_t usIndex_, uint16_t usCount_);
+static HAL_StatusTypeDef StartUartDmaPortTransfer(UartDmaPortTypeDef *pstPort_, uint8_t *paucData_, uint16_t usLen_);
+static HAL_StatusTypeDef EnableUartDmaPortReceive(UartDmaPortTypeDef *pstPort_);
+static void TryStartUartDmaPortTx(UartDmaPortTypeDef *pstPort_);
+static uint16_t GetUartDmaPortTxFreeSpace(UartDmaPortTypeDef *pstPort_);
+static uint16_t AdvanceUartDmaPortIndex(uint16_t usRingSize_, uint16_t usIndex_, uint16_t usCount_);
 static uint32_t EnterUartDmaPortCritical(void);
 static void ExitUartDmaPortCritical(uint32_t ulPrimask_);
-static uint8_t IsUartDmaPortValid(UartDmaPortTypedef *pstPort_);
-static HAL_StatusTypeDef RegisterUartDmaPort(UartDmaPortTypedef *pstPort_);
-static UartDmaPortTypedef *FindUartDmaPort(UART_HandleTypeDef *pstUart_);
+static bool IsUartDmaPortValid(UartDmaPortTypeDef *pstPort_);
+static HAL_StatusTypeDef RegisterUartDmaPort(UartDmaPortTypeDef *pstPort_);
+static HAL_StatusTypeDef RegisterUartDmaPortCallbacks(UartDmaPortTypeDef *pstPort_);
+static UartDmaPortTypeDef *FindUartDmaPort(UART_HandleTypeDef *pstUart_);
+static void UartDmaPortTxCpltCallback(UART_HandleTypeDef *pstUart_);
+static void UartDmaPortRxEventCallback(UART_HandleTypeDef *pstUart_, uint16_t usSize_);
 
 /*=============================================================================
  * Public Function Definitions
@@ -57,21 +61,62 @@ static UartDmaPortTypedef *FindUartDmaPort(UART_HandleTypeDef *pstUart_);
  *
  * @return HAL status.
  */
-HAL_StatusTypeDef UartDmaPort_Init(UartDmaPortTypedef *pstPort_)
+HAL_StatusTypeDef UartDmaPort_Init(UartDmaPortTypeDef *pstPort_)
 {
   // Reject incomplete port objects.
-  if (IsUartDmaPortValid(pstPort_) == 0U)
+  if (IsUartDmaPortValid(pstPort_) == false)
     return HAL_ERROR;
 
   pstPort_->usTxHead = 0U;
   pstPort_->usTxTail = 0U;
+  pstPort_->usRxHead = 0U;
+  pstPort_->usRxTail = 0U;
   pstPort_->txDmaLen = 0U;
-  pstPort_->ucTxDmaActive = 0U;
+  pstPort_->bTxDmaActive = false;
+  pstPort_->hEventFlags = osEventFlagsNew(NULL);
+  if (pstPort_->hEventFlags == NULL)
+    return HAL_ERROR;
 
   if (RegisterUartDmaPort(pstPort_) != HAL_OK)
     return HAL_ERROR;
 
+  if (RegisterUartDmaPortCallbacks(pstPort_) != HAL_OK)
+    return HAL_ERROR;
+
   return EnableUartDmaPortReceive(pstPort_);
+}
+
+/**
+ * @brief Read bytes received by RX DMA from the RX ring buffer.
+ *
+ * @param[in,out] pstPort_  UART DMA port object.
+ * @param[out]    paucData_ Destination buffer.
+ * @param[in]     usLen_    Maximum number of bytes to read.
+ *
+ * @return Number of bytes read.
+ */
+uint16_t UartDmaPort_Read(UartDmaPortTypeDef *pstPort_, uint8_t *paucData_, uint16_t usLen_)
+{
+  uint16_t usRead = 0U;
+  uint32_t ulPrimask = 0U;
+
+  // Reject empty or invalid reads.
+  if ((IsUartDmaPortValid(pstPort_) == false) || (paucData_ == NULL) || (usLen_ == 0U))
+    return 0U;
+
+  ulPrimask = EnterUartDmaPortCritical();
+
+  // Copy until the request is filled or the RX ring is empty.
+  while ((usRead < usLen_) && (pstPort_->usRxTail != pstPort_->usRxHead))
+  {
+    paucData_[usRead] = pstPort_->paucRxBuf[pstPort_->usRxTail];
+    pstPort_->usRxTail = AdvanceUartDmaPortIndex(pstPort_->usRxSize, pstPort_->usRxTail, 1U);
+    usRead++;
+  }
+
+  ExitUartDmaPortCritical(ulPrimask);
+
+  return usRead;
 }
 
 /**
@@ -83,13 +128,13 @@ HAL_StatusTypeDef UartDmaPort_Init(UartDmaPortTypedef *pstPort_)
  *
  * @return Number of bytes queued.
  */
-uint16_t UartDmaPort_Write(UartDmaPortTypedef *pstPort_, const uint8_t *paucData_, uint16_t usLen_)
+uint16_t UartDmaPort_Write(UartDmaPortTypeDef *pstPort_, const uint8_t *paucData_, uint16_t usLen_)
 {
   uint16_t usWritten = 0U;
   uint32_t ulPrimask = 0U;
 
   // Reject empty or invalid writes.
-  if ((IsUartDmaPortValid(pstPort_) == 0U) || (paucData_ == NULL) || (usLen_ == 0U))
+  if ((IsUartDmaPortValid(pstPort_) == false) || (paucData_ == NULL) || (usLen_ == 0U))
     return 0U;
 
   ulPrimask = EnterUartDmaPortCritical();
@@ -98,7 +143,7 @@ uint16_t UartDmaPort_Write(UartDmaPortTypedef *pstPort_, const uint8_t *paucData
   while ((usWritten < usLen_) && (GetUartDmaPortTxFreeSpace(pstPort_) > 0U))
   {
     pstPort_->paucTxBuf[pstPort_->usTxHead] = paucData_[usWritten];
-    pstPort_->usTxHead = AdvanceUartDmaPortIndex(pstPort_, pstPort_->usTxHead, 1U);
+    pstPort_->usTxHead = AdvanceUartDmaPortIndex(pstPort_->usTxSize, pstPort_->usTxHead, 1U);
     usWritten++;
   }
 
@@ -117,7 +162,7 @@ uint16_t UartDmaPort_Write(UartDmaPortTypedef *pstPort_, const uint8_t *paucData
  *
  * @return Number of bytes queued.
  */
-uint16_t UartDmaPort_WriteString(UartDmaPortTypedef *pstPort_, const char *pcString_)
+uint16_t UartDmaPort_WriteString(UartDmaPortTypeDef *pstPort_, const char *pcString_)
 {
   uint16_t usLen = 0U;
 
@@ -132,84 +177,50 @@ uint16_t UartDmaPort_WriteString(UartDmaPortTypedef *pstPort_, const char *pcStr
   return UartDmaPort_Write(pstPort_, (const uint8_t *)pcString_, usLen);
 }
 
-/**
- * @brief UART TX complete hook for a UART DMA port.
- *
- * @param[in,out] pstPort_ UART DMA port object.
- * @param[in]     pstUart_ UART that completed transmission.
- */
-void UartDmaPort_TxCpltCallback(
-    UartDmaPortTypedef *pstPort_,
-    UART_HandleTypeDef *pstUart_)
-{
-  // Ignore callbacks from unrelated UARTs.
-  if ((IsUartDmaPortValid(pstPort_) == 0U) || (pstUart_ != pstPort_->pstHuart))
-    return;
-
-  pstPort_->usTxTail = AdvanceUartDmaPortIndex(pstPort_, pstPort_->usTxTail, pstPort_->txDmaLen);
-  pstPort_->txDmaLen = 0U;
-  pstPort_->ucTxDmaActive = 0U;
-
-  TryStartUartDmaPortTx(pstPort_);
-}
-
-/**
- * @brief UART receive-to-idle hook for a UART DMA port.
- *
- * @param[in,out] pstPort_ UART DMA port object.
- * @param[in]     pstUart_ UART that received data.
- * @param[in]     usSize_  Number of bytes received.
- */
-void UartDmaPort_RxEventCallback(
-    UartDmaPortTypedef *pstPort_,
-    UART_HandleTypeDef *pstUart_,
-    uint16_t usSize_)
-{
-  (void)usSize_;
-
-  // Ignore callbacks from unrelated UARTs.
-  if ((IsUartDmaPortValid(pstPort_) == 0U) || (pstUart_ != pstPort_->pstHuart))
-    return;
-
-  (void)EnableUartDmaPortReceive(pstPort_);
-}
-
-/**
- * @brief HAL receive-to-idle callback dispatcher for registered UART DMA ports.
- *
- * @param[in] huart UART that received data.
- * @param[in] Size  Number of bytes received.
- */
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
-{
-  UartDmaPortTypedef *pstPort = FindUartDmaPort(huart);
-
-  // Ignore callbacks from UARTs that do not use this driver.
-  if (pstPort == NULL)
-    return;
-
-  UartDmaPort_RxEventCallback(pstPort, huart, Size);
-}
-
-/**
- * @brief HAL TX complete callback dispatcher for registered UART DMA ports.
- *
- * @param[in] huart UART that completed transmission.
- */
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-  UartDmaPortTypedef *pstPort = FindUartDmaPort(huart);
-
-  // Ignore callbacks from UARTs that do not use this driver.
-  if (pstPort == NULL)
-    return;
-
-  UartDmaPort_TxCpltCallback(pstPort, huart);
-}
-
 /*=============================================================================
  * Private Function Definitions
  *============================================================================*/
+/**
+ * @brief Registered UART TX complete callback dispatcher.
+ *
+ * @param[in] pstUart_ UART that completed transmission.
+ */
+static void UartDmaPortTxCpltCallback(UART_HandleTypeDef *pstUart_)
+{
+  UartDmaPortTypeDef *pstPort = FindUartDmaPort(pstUart_);
+
+  // Ignore callbacks from UARTs that do not use this driver.
+  if (pstPort == NULL)
+    return;
+
+  pstPort->usTxTail = AdvanceUartDmaPortIndex(pstPort->usTxSize, pstPort->usTxTail, pstPort->txDmaLen);
+  pstPort->txDmaLen = 0U;
+  pstPort->bTxDmaActive = false;
+
+  // Try to start a new transfer if messages exist in queue.
+  TryStartUartDmaPortTx(pstPort);
+}
+
+/**
+ * @brief Registered UART receive-to-idle callback dispatcher.
+ *
+ * @param[in] pstUart_ UART that received data.
+ * @param[in] usSize_  Number of bytes received.
+ */
+static void UartDmaPortRxEventCallback(UART_HandleTypeDef *pstUart_, uint16_t usSize_)
+{
+  UartDmaPortTypeDef *pstPort = FindUartDmaPort(pstUart_);
+
+  // Ignore callbacks from UARTs that do not use this driver.
+  if (pstPort == NULL)
+    return;
+
+  //Update the head index based on the number of bytes received.
+  pstPort->usRxHead = AdvanceUartDmaPortIndex(pstPort->usRxSize, 0U, usSize_);
+
+  (void)osEventFlagsSet(pstPort->hEventFlags, UART_DMA_PORT_RX_EVENT_FLAG);
+}
+
 /**
  * @brief Start receive-to-idle DMA on a UART DMA port.
  *
@@ -217,12 +228,12 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
  *
  * @return HAL status.
  */
-static HAL_StatusTypeDef EnableUartDmaPortReceive(UartDmaPortTypedef *pstPort_)
+static HAL_StatusTypeDef EnableUartDmaPortReceive(UartDmaPortTypeDef *pstPort_)
 {
   HAL_StatusTypeDef eStatus = HAL_ERROR;
 
   // Reject incomplete receive configuration.
-  if (IsUartDmaPortValid(pstPort_) == 0U)
+  if (IsUartDmaPortValid(pstPort_) == false)
     return HAL_ERROR;
 
   eStatus = HAL_UARTEx_ReceiveToIdle_DMA(
@@ -242,20 +253,20 @@ static HAL_StatusTypeDef EnableUartDmaPortReceive(UartDmaPortTypedef *pstPort_)
  *
  * @param[in,out] pstPort_ UART DMA port object.
  */
-static void TryStartUartDmaPortTx(UartDmaPortTypedef *pstPort_)
+static void TryStartUartDmaPortTx(UartDmaPortTypeDef *pstPort_)
 {
   uint16_t usLen = 0U;
   uint16_t usTail = 0U;
   uint32_t ulPrimask = 0U;
 
   // Reject incomplete port objects.
-  if (IsUartDmaPortValid(pstPort_) == 0U)
+  if (IsUartDmaPortValid(pstPort_) == false)
     return;
 
   ulPrimask = EnterUartDmaPortCritical();
 
   // Nothing to start if DMA is busy or the ring is empty.
-  if ((pstPort_->ucTxDmaActive != 0U) || (pstPort_->usTxHead == pstPort_->usTxTail))
+  if ((pstPort_->bTxDmaActive != false) || (pstPort_->usTxHead == pstPort_->usTxTail))
   {
     ExitUartDmaPortCritical(ulPrimask);
     return;
@@ -270,7 +281,7 @@ static void TryStartUartDmaPortTx(UartDmaPortTypedef *pstPort_)
     usLen = pstPort_->usTxSize - usTail;
 
   pstPort_->txDmaLen = usLen;
-  pstPort_->ucTxDmaActive = 1U;
+  pstPort_->bTxDmaActive = true;
 
   ExitUartDmaPortCritical(ulPrimask);
 
@@ -279,7 +290,7 @@ static void TryStartUartDmaPortTx(UartDmaPortTypedef *pstPort_)
   {
     ulPrimask = EnterUartDmaPortCritical();
     pstPort_->txDmaLen = 0U;
-    pstPort_->ucTxDmaActive = 0U;
+    pstPort_->bTxDmaActive = false;
     ExitUartDmaPortCritical(ulPrimask);
   }
 }
@@ -291,7 +302,7 @@ static void TryStartUartDmaPortTx(UartDmaPortTypedef *pstPort_)
  *
  * @return Number of free bytes available for new data.
  */
-static uint16_t GetUartDmaPortTxFreeSpace(UartDmaPortTypedef *pstPort_)
+static uint16_t GetUartDmaPortTxFreeSpace(UartDmaPortTypeDef *pstPort_)
 {
   uint16_t usHead = pstPort_->usTxHead;
   uint16_t usTail = pstPort_->usTxTail;
@@ -306,21 +317,21 @@ static uint16_t GetUartDmaPortTxFreeSpace(UartDmaPortTypedef *pstPort_)
 /**
  * @brief Advance a ring index by count bytes.
  *
- * @param[in] pstPort_  UART DMA port object.
- * @param[in] usIndex_  Current ring index.
- * @param[in] usCount_  Number of bytes to advance.
+ * @param[in] usRingSize_ Number of entries in the ring.
+ * @param[in] usIndex_    Current ring index.
+ * @param[in] usCount_    Number of bytes to advance.
  *
  * @return Advanced ring index.
  */
-static uint16_t AdvanceUartDmaPortIndex(UartDmaPortTypedef *pstPort_, uint16_t usIndex_, uint16_t usCount_)
+static uint16_t AdvanceUartDmaPortIndex(
+  uint16_t usRingSize_,
+  uint16_t usIndex_,
+  uint16_t usCount_)
 {
-  usIndex_ += usCount_;
+  if (usRingSize_ == 0U)
+    return 0U;
 
-  // Wrap the index back into the ring.
-  while (usIndex_ >= pstPort_->usTxSize)
-    usIndex_ -= pstPort_->usTxSize;
-
-  return usIndex_;
+  return (uint16_t)(((uint32_t)usIndex_ + usCount_) & (usRingSize_ - 1U));
 }
 
 /**
@@ -357,17 +368,13 @@ static void ExitUartDmaPortCritical(uint32_t ulPrimask_)
  * @return HAL status.
  */
 static HAL_StatusTypeDef StartUartDmaPortTransfer(
-    UartDmaPortTypedef *pstPort_,
-    uint8_t *paucData_,
-    uint16_t usLen_)
+  UartDmaPortTypeDef *pstPort_,
+  uint8_t *paucData_,
+  uint16_t usLen_)
 {
   // Reject invalid DMA transfer requests.
-  if ((IsUartDmaPortValid(pstPort_) == 0U) || (paucData_ == NULL) || (usLen_ == 0U))
+  if ((IsUartDmaPortValid(pstPort_) == false) || (paucData_ == NULL) || (usLen_ == 0U))
     return HAL_ERROR;
-
-  // HAL owns the UART state while a TX DMA is in progress.
-  if (pstPort_->pstHuart->gState != HAL_UART_STATE_READY)
-    return HAL_BUSY;
 
   return HAL_UART_Transmit_DMA(pstPort_->pstHuart, paucData_, usLen_);
 }
@@ -377,13 +384,13 @@ static HAL_StatusTypeDef StartUartDmaPortTransfer(
  *
  * @param[in] pstPort_ UART DMA port object.
  *
- * @return 1 when valid, 0 otherwise.
+ * @return true when valid, false otherwise.
  */
-static uint8_t IsUartDmaPortValid(UartDmaPortTypedef *pstPort_)
+static bool IsUartDmaPortValid(UartDmaPortTypeDef *pstPort_)
 {
   // Reject missing object pointers.
   if (pstPort_ == NULL)
-    return 0U;
+    return false;
 
   // Reject incomplete UART/DMA buffer configuration.
   if ((pstPort_->pstHuart == NULL) ||
@@ -392,12 +399,14 @@ static uint8_t IsUartDmaPortValid(UartDmaPortTypedef *pstPort_)
       (pstPort_->paucRxBuf == NULL) ||
       (pstPort_->paucTxBuf == NULL) ||
       (pstPort_->usRxSize == 0U) ||
-      (pstPort_->usTxSize < 2U))
+      (pstPort_->usTxSize < 2U) ||
+      (IS_SIZE_POWER_OF_TWO(pstPort_->usRxSize) == false) ||
+      (IS_SIZE_POWER_OF_TWO(pstPort_->usTxSize) == false))
   {
-    return 0U;
+    return false;
   }
 
-  return 1U;
+  return true;
 }
 
 /**
@@ -407,32 +416,54 @@ static uint8_t IsUartDmaPortValid(UartDmaPortTypedef *pstPort_)
  *
  * @return HAL status.
  */
-static HAL_StatusTypeDef RegisterUartDmaPort(UartDmaPortTypedef *pstPort_)
+static HAL_StatusTypeDef RegisterUartDmaPort(UartDmaPortTypeDef *pstPort_)
 {
   uint16_t usIndex = 0U;
 
   // Reject incomplete port objects.
-  if (IsUartDmaPortValid(pstPort_) == 0U)
+  if (IsUartDmaPortValid(pstPort_) == false)
     return HAL_ERROR;
 
   for (usIndex = 0U; usIndex < UART_DMA_PORT_MAX_PORTS; usIndex++)
   {
     // Already registered.
-    if (apstTheUartDmaPorts[usIndex] == pstPort_)
+    if (pastTheUartDmaPorts[usIndex] == pstPort_)
       return HAL_OK;
   }
 
   for (usIndex = 0U; usIndex < UART_DMA_PORT_MAX_PORTS; usIndex++)
   {
     // Use the first empty registry slot.
-    if (apstTheUartDmaPorts[usIndex] == NULL)
+    if (pastTheUartDmaPorts[usIndex] == NULL)
     {
-      apstTheUartDmaPorts[usIndex] = pstPort_;
+      pastTheUartDmaPorts[usIndex] = pstPort_;
       return HAL_OK;
     }
   }
 
   return HAL_ERROR;
+}
+
+/**
+ * @brief Register HAL UART callbacks used by a UART DMA port.
+ *
+ * @param[in,out] pstPort_ UART DMA port object.
+ *
+ * @return HAL status.
+ */
+static HAL_StatusTypeDef RegisterUartDmaPortCallbacks(UartDmaPortTypeDef *pstPort_)
+{
+  // Reject incomplete port objects.
+  if (IsUartDmaPortValid(pstPort_) == false)
+    return HAL_ERROR;
+
+  if (HAL_UART_RegisterCallback(pstPort_->pstHuart, HAL_UART_TX_COMPLETE_CB_ID, UartDmaPortTxCpltCallback) != HAL_OK)
+    return HAL_ERROR;
+
+  if (HAL_UART_RegisterRxEventCallback(pstPort_->pstHuart, UartDmaPortRxEventCallback) != HAL_OK)
+    return HAL_ERROR;
+
+  return HAL_OK;
 }
 
 /**
@@ -442,7 +473,7 @@ static HAL_StatusTypeDef RegisterUartDmaPort(UartDmaPortTypedef *pstPort_)
  *
  * @return Matching port object, or NULL.
  */
-static UartDmaPortTypedef *FindUartDmaPort(UART_HandleTypeDef *pstUart_)
+static UartDmaPortTypeDef *FindUartDmaPort(UART_HandleTypeDef *pstUart_)
 {
   uint16_t usIndex = 0U;
 
@@ -450,12 +481,11 @@ static UartDmaPortTypedef *FindUartDmaPort(UART_HandleTypeDef *pstUart_)
   if (pstUart_ == NULL)
     return NULL;
 
-  // 
   for (usIndex = 0U; usIndex < UART_DMA_PORT_MAX_PORTS; usIndex++)
   {
     // Match callbacks by HAL UART handle.
-    if ((apstTheUartDmaPorts[usIndex] != NULL) && (apstTheUartDmaPorts[usIndex]->pstHuart == pstUart_))
-      return apstTheUartDmaPorts[usIndex];
+    if ((pastTheUartDmaPorts[usIndex] != NULL) && (pastTheUartDmaPorts[usIndex]->pstHuart == pstUart_))
+      return pastTheUartDmaPorts[usIndex];
   }
 
   return NULL;

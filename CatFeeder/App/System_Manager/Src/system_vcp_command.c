@@ -1,5 +1,5 @@
 /******************************************************************************
- * @file    comm_debug_task.c
+ * @file    system_vcp_command.c
  * @brief   
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
@@ -17,8 +17,9 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
+#include "system_vcp_command.h"
+#include <string.h>
 #include "vcp_debug.h"
-#include "cmsis_os.h"
 
 /*=============================================================================
  * Private Macros
@@ -38,35 +39,38 @@
 /*=============================================================================
  * Private Function Prototypes
  *============================================================================*/
-void StartDebugCommTask(void *argument);
+
+
+/*=============================================================================
+ * Public Function Definitions
+ *============================================================================*/
+/**
+ * @brief Handle one VCP command for the System Manager module.
+ *
+ * @param[in] pstCmd_ Pointer to the VCP command structure
+ *
+ * @return true if command was recognized and handled, false otherwise
+ */
+bool HandleSystemVcpCommand(const VcpCommandTypeDef *pstCmd_)
+{
+  if (pstCmd_ == NULL)
+    return false;
+
+
+  return false; 
+}
 
 /*=============================================================================
  * Private Function Definitions
  *============================================================================*/
 
 /**
- * @brief Function implementing the DebugCommTask thread.
+ * @brief
  *
- * @param[in]  Not used
- * @param[out] Not used
+ * @details
  *
- * @return Not used
+ * @param[in]
+ * @param[out]
+ *
+ * @return
  */
-void StartDebugCommTask(void *argument)
-{
-  /* USER CODE BEGIN StartDebugCommTask */
-  VcpDebug_Init();
-  uint32_t ulCount = 0;
-  /* Infinite loop */
-  for(;;)
-  {
-    ulCount += 1;
-    DPRINTF_ERROR(DBG_MASK_FEEDING, "Error From DebugCommTask Count: %u\r\n", ulCount);
-    DPRINTF_WARN(DBG_MASK_COMM, "Warn From DebugCommTask Count: %u\r\n", ulCount);
-    DPRINTF_INFO(DBG_MASK_SYSTEM, "Info From DebugCommTask Count: %u\r\n", ulCount);
-    DPRINTF_DEBUG(DBG_MASK_THERMAL, "Debug From DebugCommTask Count: %u\r\n", ulCount);
-    DPRINTF_TRACE(DBG_MASK_SYSTEM, "Trace From DebugCommTask Count: %u\r\n", ulCount);
-    osDelay(100);
-  }
-  /* USER CODE END StartDebugCommTask */
-}
