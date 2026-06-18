@@ -1,9 +1,9 @@
 /******************************************************************************
- * @file    comm_pi_task.c
+ * @file    system_vcp_command.h
  * @brief
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
- * @course  ECE 498 Engineering Design Project
+ * @course  University of Waterloo ECE498 Engineering Design Project
  * @team    Team 53
  * @authors
  *
@@ -14,54 +14,40 @@
  *
  ******************************************************************************/
 
+#ifndef SYSTEM_MANAGER_INC_SYSTEM_VCP_COMMAND_H_
+#define SYSTEM_MANAGER_INC_SYSTEM_VCP_COMMAND_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "cmsis_os.h"
-#include "vcp_debug.h"
+#include "vcp_types.h"
 
 /*=============================================================================
- * Private Macros
+ * Public Macros
  *============================================================================*/
+
 
 /*=============================================================================
- * Private Type Definitions
+ * Public Type Definitions
  *============================================================================*/
+
 
 /*=============================================================================
- * Private Variables
+ * Public Constants
  *============================================================================*/
+
 
 /*=============================================================================
- * Private Function Prototypes
+ * Public Function Prototypes
  *============================================================================*/
-void StartPiCommTask(void *argument);
+bool HandleSystemVcpCommand(const VcpCommandTypeDef *pstCmd_);
 
-/*=============================================================================
- * Private Function Definitions
- *============================================================================*/
-
-/**
- * @brief Function implementing the PiCommTask thread.
- *
- * @param[in]  Not used
- * @param[out] Not used
- *
- * @return Not used
- */
-void StartPiCommTask(void *argument)
-{
-  uint32_t ulCount = 0;
-  /* Infinite loop */
-  for (;;)
-  {
-    DPRINTF_ERROR(DBG_MASK_FEEDING, "Error From PiCommTask Count: %u\r\n", ulCount);
-    DPRINTF_WARN(DBG_MASK_COMM, "Warn From PiCommTask Count: %u\r\n", ulCount);
-    DPRINTF_INFO(DBG_MASK_SYSTEM, "Info From PiCommTask Count: %u\r\n", ulCount);
-    DPRINTF_DEBUG(DBG_MASK_THERMAL, "Debug From PiCommTask Count: %u\r\n", ulCount);
-    DPRINTF_TRACE(DBG_MASK_SYSTEM, "Trace From PiCommTask Count: %u\r\n", ulCount);
-    ulCount++;
-    osDelay(1000);
-  }
-
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* SYSTEM_MANAGER_INC_SYSTEM_VCP_COMMAND_H_ */

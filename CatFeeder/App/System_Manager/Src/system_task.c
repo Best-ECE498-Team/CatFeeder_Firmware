@@ -69,6 +69,8 @@ void StartSystemTask(void *argument)
     osDelay(10);
   }
 
+  osThreadTerminate(NULL);
+
 }
 
 /*=============================================================================
