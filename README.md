@@ -5,11 +5,11 @@ Firmware for the PawPlate Intelligent Wet Food Dispenser.
 Built using:
 
 * STM32G474RE
-* FreeRTOS
 * STM32CubeIDE v1.19.0
+* STM32CubeMx v6.170
 * STM32CubeProgrammer
-* Git
-* Sublime Merge
+* Sublime Merge (optional)
+* Any editor you like
 
 ---
 
@@ -44,6 +44,7 @@ Core/
 Drivers/
 Middlewares/
 Startup/
+Platform/
 ```
 
 ### Module Layout
@@ -89,14 +90,6 @@ Use module APIs instead.
 ---
 
 ### 2. Drivers Only Control Hardware
-
-Drivers should contain:
-
-* GPIO
-* PWM
-* ADC
-* UART
-* Sensors
 
 Drivers should not contain:
 
@@ -189,13 +182,3 @@ Before creating a PR:
 * Code follows module structure
 * Hardware code stays in drivers
 * Tested on hardware when possible
-
----
-
-## Questions?
-
-If you are unsure where code belongs, ask:
-
-**"Is this hardware, task logic, module logic, or system logic?"**
-
-The answer usually determines the correct file.
