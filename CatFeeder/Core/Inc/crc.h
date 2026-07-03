@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    usart.h
+  * @file    crc.h
   * @brief   This file contains all the function prototypes for
-  *          the usart.c file
+  *          the crc.c file
   ******************************************************************************
   * @attention
   *
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USART_H__
-#define __USART_H__
+#ifndef __CRC_H__
+#define __CRC_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,20 +32,13 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern UART_HandleTypeDef hlpuart1;
-
-extern UART_HandleTypeDef huart4;
-
-extern UART_HandleTypeDef huart5;
+extern CRC_HandleTypeDef hcrc;
 
 /* USER CODE BEGIN Private defines */
-extern DMA_HandleTypeDef hdma_lpuart1_rx;
-extern DMA_HandleTypeDef hdma_lpuart1_tx;
+
 /* USER CODE END Private defines */
 
-void MX_LPUART1_UART_Init(void);
-void MX_UART4_Init(void);
-void MX_UART5_Init(void);
+void MX_CRC_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -55,5 +48,5 @@ void MX_UART5_Init(void);
 }
 #endif
 
-#endif /* __USART_H__ */
+#endif /* __CRC_H__ */
 

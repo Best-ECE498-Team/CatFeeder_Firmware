@@ -14,8 +14,8 @@
  *
  ******************************************************************************/
 
-#ifndef COMMUNICATION_MODULE_INC_VCP_DEBUG_H_
-#define COMMUNICATION_MODULE_INC_VCP_DEBUG_H_
+#ifndef DEBUG_MODULE_INC_VCP_DEBUG_H_
+#define DEBUG_MODULE_INC_VCP_DEBUG_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,11 +77,11 @@ typedef enum
  * Public Function Prototypes
  *============================================================================*/
 void VcpDebug_Init(void);
-void VcpDebugPrintf(VcpDebugLevelTypeDef eLevel_, uint32_t ulTargetMask_, const char* pcFormat_, ...);
+void VcpDebugPrintf(VcpDebugLevelTypeDef eLevel_, uint32_t ulTargetMask_, const char *pcFormat_, ...);
 bool HandleDebugVcpCommand(const VcpCommandTypeDef *pstCmd_);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* COMMUNICATION_MODULE_INC_VCP_DEBUG_H_ */
+#endif /* DEBUG_MODULE_INC_VCP_DEBUG_H_ */

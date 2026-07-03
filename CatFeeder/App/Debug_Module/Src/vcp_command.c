@@ -17,10 +17,10 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "vcp_command.h"
+#include "../Internal/vcp_command.h"
 #include "system_vcp_command.h"
 #include "vcp_debug.h"
-#include "vcp_port.h"
+#include "../Internal/vcp_port.h"
 #include <string.h>
 
 /*=============================================================================
@@ -38,8 +38,7 @@ static const VcpCommandModuleEntryTypeDef astVcpCmdModuleTable[] =
   { "system",  HandleSystemVcpCommand },
   // { "thermal", HandleThermalVcpCommand },
   // { "feeding", HandleFeedingVcpCommand },
-  // { "comm",    HandleCommVcpCommand },
-  { NULL,      NULL }
+  // { "comm",    HandleCommVcpCommand }
 };
 
 /*=============================================================================
@@ -47,7 +46,6 @@ static const VcpCommandModuleEntryTypeDef astVcpCmdModuleTable[] =
  *============================================================================*/
 static char acTheVcpCommandBuf[VCP_COMMAND_BUF_SIZE];
 static uint16_t usTheVcpCommandIndex;
-
 
 /*=============================================================================
  * Private Function Prototypes

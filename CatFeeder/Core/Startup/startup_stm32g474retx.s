@@ -32,6 +32,11 @@
 
 .global	g_pfnVectors
 .global	Default_Handler
+.global Platform_HardFault_Handler
+.global Platform_MemManage_Handler
+.global Platform_BusFault_Handler
+.global Platform_UsageFault_Handler
+.extern HandleCriticalError
 
 /* start address for the initialization values of the .data section.
 defined in linker script */
@@ -119,6 +124,54 @@ Default_Handler:
 Infinite_Loop:
 	b	Infinite_Loop
 	.size	Default_Handler, .-Default_Handler
+
+/**
+ * @brief  This is the code that gets called when the processor receives an
+ *         unexpected interrupt. This function saves current stack pointer and link register and  
+ *				 call HandleCriticalError(uint32_t *pulStackFrame_, uint32_t ulExcReturn_)
+*/
+.section .text.Platform_Fault_Handler,"ax",%progbits
+.thumb
+
+.type Platform_HardFault_Handler, %function
+Platform_HardFault_Handler:
+    b Platform_Fault_Common
+.size Platform_HardFault_Handler, .-Platform_HardFault_Handler
+
+.type Platform_MemManage_Handler, %function
+Platform_MemManage_Handler:
+    b Platform_Fault_Common
+.size Platform_MemManage_Handler, .-Platform_MemManage_Handler
+
+.type Platform_BusFault_Handler, %function
+Platform_BusFault_Handler:
+    b Platform_Fault_Common
+.size Platform_BusFault_Handler, .-Platform_BusFault_Handler
+
+.type Platform_UsageFault_Handler, %function
+Platform_UsageFault_Handler:
+    b Platform_Fault_Common
+.size Platform_UsageFault_Handler, .-Platform_UsageFault_Handler
+
+/* The code checks bit 2 of exception return value, load r0 and r1 then branch to HandleCriticalError.
+	 In C: 
+	 void Platform_Fault_Common
+	 {
+			((LR & 0x4) == 0) ? r0 = Main Stack Pointer : r0 = Process Stack Pointer;
+			r1 = LR;
+			HandleCriticalError(r0, r1);
+	 }
+*/
+.type Platform_Fault_Common, %function
+Platform_Fault_Common:
+	tst 	lr, #4           
+	ite 	eq                  
+	mrseq r0, msp           
+	mrsne r0, psp           	
+	mov 	r1, lr             
+	b 		HandleCriticalError
+.size Platform_Fault_Common, .-Platform_Fault_Common
+
 /******************************************************************************
 *
 * The minimal vector table for a Cortex-M4.  Note that the proper constructs
@@ -134,10 +187,10 @@ g_pfnVectors:
 	.word	_estack
 	.word	Reset_Handler
 	.word	NMI_Handler
-	.word	HardFault_Handler
-	.word	MemManage_Handler
-	.word	BusFault_Handler
-	.word	UsageFault_Handler
+	.word	Platform_HardFault_Handler
+	.word	Platform_MemManage_Handler
+	.word	Platform_BusFault_Handler
+	.word	Platform_UsageFault_Handler
 	.word	0
 	.word	0
 	.word	0

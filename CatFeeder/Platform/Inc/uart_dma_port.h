@@ -1,5 +1,5 @@
 /******************************************************************************
- * @file    usart_dma_port.h
+ * @file    uart_dma_port.h
  * @brief   UART DMA port interface.
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
@@ -14,12 +14,11 @@
  *
  ******************************************************************************/
 
-#ifndef PLATFORM_UTILITIES_INC_USART_DMA_PORT_H_
-#define PLATFORM_UTILITIES_INC_USART_DMA_PORT_H_
+#ifndef INC_UART_DMA_PORT_H_
+#define INC_UART_DMA_PORT_H_
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /*=============================================================================
@@ -56,7 +55,7 @@ typedef struct
 
   volatile bool bTxDmaActive;        /**< TX DMA transfer active */
   uint16_t txDmaLen;                 /**< Current DMA TX length */
-  
+
   osEventFlagsId_t hEventFlags;      /**< Event flags for signaling between DMA ISR and API */
 } UartDmaPortTypeDef;
 
@@ -79,4 +78,4 @@ uint16_t UartDmaPort_WriteString(UartDmaPortTypeDef *pstPort_, const char *pcStr
 }
 #endif
 
-#endif /* PLATFORM_UTILITIES_INC_USART_DMA_PORT_H_ */
+#endif /* INC_UART_DMA_PORT_H_ */
