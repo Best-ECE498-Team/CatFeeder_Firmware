@@ -44,7 +44,7 @@ static const VcpCommandModuleEntryTypeDef astVcpCmdModuleTable[] =
 /*=============================================================================
  * Private Variables
  *============================================================================*/
-static char acTheVcpCommandBuf[VCP_COMMAND_BUF_SIZE];
+static char aucTheVcpCommandBuf[VCP_COMMAND_BUF_SIZE];
 static uint16_t usTheVcpCommandIndex;
 
 /*=============================================================================
@@ -73,8 +73,8 @@ void VcpCommand_HandleReceived(void)
     {
       if (usTheVcpCommandIndex > 0U)
       {
-        acTheVcpCommandBuf[usTheVcpCommandIndex] = '\0';
-        if (VcpCommand_ProcessLine(acTheVcpCommandBuf) == false)
+        aucTheVcpCommandBuf[usTheVcpCommandIndex] = '\0';
+        if (VcpCommand_ProcessLine(aucTheVcpCommandBuf) == false)
           DPRINTF_VCP("ERR unknown command\r\n");
 
         usTheVcpCommandIndex = 0U;
@@ -91,7 +91,7 @@ void VcpCommand_HandleReceived(void)
       continue;
     }
 
-    acTheVcpCommandBuf[usTheVcpCommandIndex] = (char)ucByte;
+    aucTheVcpCommandBuf[usTheVcpCommandIndex] = (char)ucByte;
     usTheVcpCommandIndex++;
   }
 }

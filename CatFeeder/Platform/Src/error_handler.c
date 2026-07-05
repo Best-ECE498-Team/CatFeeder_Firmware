@@ -443,12 +443,12 @@ static void PrintXpsrDetails(uint32_t ulXpsr_)
 /**
   * @brief      Print every active flag from a fault decode table.
   * 
-  * @param[in]  pcTitle_    Report section title
+  * @param[in]  paucTitle_  Report section title
   * @param[in]  ulRegValue_ Register or flag value to decode
   * @param[in]  pastTable_  Decode table
   * @param[in]  ulTableCount_ Number of entries in the decode table
   */
-static void PrintFaultDecodeTable(const char *pcTitle_, 
+static void PrintFaultDecodeTable(const char *paucTitle_, 
                                   uint32_t ulRegValue_,
                                   const FaultDecodeEntryTypeDef *pastTable_,
                                   uint32_t ulTableCount_)
@@ -456,7 +456,7 @@ static void PrintFaultDecodeTable(const char *pcTitle_,
   bool bAnySet = false;
   uint32_t ulIndex = 0U;
 
-  printf("* %s\r\n", pcTitle_);
+  printf("* %s\r\n", paucTitle_);
 
   // Scan every decode-table entry.
   for (ulIndex = 0U; ulIndex < ulTableCount_; ulIndex++)

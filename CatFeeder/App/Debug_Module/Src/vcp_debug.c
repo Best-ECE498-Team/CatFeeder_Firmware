@@ -25,6 +25,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "error_handler.h"
 
 /*=============================================================================
  * Private Macros
@@ -38,7 +39,7 @@
 /*=============================================================================
  * Private Variables
  *============================================================================*/
-static VcpDebugLevelTypeDef ulTheDebugLevel;
+static VcpDebugLevelTypeDef eTheDebugLevel;
 static uint32_t ulTheDebugTargetMask;
 
 /*=============================================================================
@@ -54,7 +55,6 @@ static bool ParseVcpDebugTargetMaskList(const char *pcText_, uint32_t *pulMask_)
 static bool ParseVcpDebugTargetMaskName(const char *pcText_, uint16_t usLen_, uint32_t *pulMask_);
 static void VcpDebug_SetLevel(VcpDebugLevelTypeDef eLevel_);
 static void VcpDebug_SetTargetMask(uint32_t ulTargetMask_);
-static void VcpDebug_TriggerHardFault(void) __attribute__((noreturn));
 
 /*=============================================================================
  * Public Function Definitions
@@ -66,7 +66,7 @@ void VcpDebug_Init(void)
 {
   (void)VcpPort_Init();
 
-  ulTheDebugLevel = LEVEL_TRACE;
+  eTheDebugLevel = LEVEL_TRACE;
   ulTheDebugTargetMask = VCP_DBG_MASK_ALL;
 }
 
@@ -170,6 +170,7 @@ bool HandleDebugVcpCommand(const VcpCommandTypeDef *pstCmd_)
   // Handle "debug.set" commands
   if (IsVcpTokenEqual(pstCmd_->pcAction, "set") != false)
   {
+    // Loop through each argument key
     for (ucIndex = 0U; ucIndex < pstCmd_->ucArgc; ucIndex++)
     {
       // Handle "debug.set level=<level>" argument
@@ -211,12 +212,13 @@ bool HandleDebugVcpCommand(const VcpCommandTypeDef *pstCmd_)
   // Handle "debug.get" commands
   if (IsVcpTokenEqual(pstCmd_->pcAction, "get") != false)
   {
+    // Loop through each argument key
     for (ucIndex = 0U; ucIndex < pstCmd_->ucArgc; ucIndex++)
     {
       // Handle "debug.get level"
       if (IsVcpTokenEqual(pstCmd_->pacArgv[ucIndex], "level") != false)
       {
-        DPRINTF_VCP("level=%s\r\n", GetVcpDebugLevelString(ulTheDebugLevel));
+        DPRINTF_VCP("level=%s\r\n", GetVcpDebugLevelString(eTheDebugLevel));
         bHandled = true;
       }
       // Handle "debug.get mask"
@@ -239,7 +241,21 @@ bool HandleDebugVcpCommand(const VcpCommandTypeDef *pstCmd_)
   if (IsVcpTokenEqual(pstCmd_->pcAction, "hardfault") != false)
   {
     DPRINTF_VCP("OK triggering hardfault\r\n");
-    VcpDebug_TriggerHardFault();
+
+    SCB->SHCSR &= ~(SCB_SHCSR_MEMFAULTENA_Msk |
+                  SCB_SHCSR_BUSFAULTENA_Msk |
+                  SCB_SHCSR_USGFAULTENA_Msk);
+    __DSB();
+    __ISB();
+
+    // Trigger a undefined instruciton hardfault
+    __asm volatile ("udf #0");
+
+    while (1)
+    {
+    }
+
+    return true;
   }
 
   // Handle "debug.help" command
@@ -293,33 +309,15 @@ static uint16_t VcpDebug_WriteString(const char *pcString_)
 }
 
 /**
- * @brief Intentionally escalate a UsageFault into HardFault for test coverage.
- */
-static void VcpDebug_TriggerHardFault(void)
-{
-  SCB->SHCSR &= ~(SCB_SHCSR_MEMFAULTENA_Msk |
-                  SCB_SHCSR_BUSFAULTENA_Msk |
-                  SCB_SHCSR_USGFAULTENA_Msk);
-  __DSB();
-  __ISB();
-
-  // Trigger a undefined instruciton hardfault
-  __asm volatile ("udf #0");
-
-  while (1)
-  {
-  }
-}
-
-/**
  * @brief Set the maximum debug level printed by VcpDebugPrintf().
  *
  * @param[in] eLevel_ Maximum enabled debug level.
  */
 static void VcpDebug_SetLevel(VcpDebugLevelTypeDef eLevel_)
 {
+  // Ensure valid level
   if (eLevel_ <= LEVEL_TRACE)
-    ulTheDebugLevel = eLevel_;
+    eTheDebugLevel = eLevel_;
 }
 
 /**
@@ -342,9 +340,11 @@ static void VcpDebug_SetTargetMask(uint32_t ulTargetMask_)
  */
 static bool ParseVcpDebugLevel(const char *pcText_, VcpDebugLevelTypeDef *peLevel_)
 {
+  // Reject null inputs.
   if ((pcText_ == NULL) || (peLevel_ == NULL))
     return false;
 
+  // Match the token to level names.
   if (IsVcpTokenEqual(pcText_, "error") != false)
     *peLevel_ = LEVEL_ERROR;
   else if (IsVcpTokenEqual(pcText_, "warn") != false)
@@ -376,18 +376,23 @@ static bool ParseVcpDebugTargetMaskList(const char *pcText_, uint32_t *pulMask_)
   uint32_t ulMask = 0U;
   uint32_t ulTokenMask = 0U;
 
+  // Reject null or empty input.
   if ((pcText_ == NULL) || (pulMask_ == NULL) || (*pcText_ == '\0'))
     return false;
 
+  // Parse each token in the comma-separated list.
   while (true)
   {
+    // Stop on the end of the string or a comma.
     if ((*pcCursor == ',') || (*pcCursor == '\0') || (*pcCursor == '\r'))
     {
+      // Parse the token between pcTokenStart and pcCursor and get mask value.
       if (ParseVcpDebugTargetMaskName(pcTokenStart, (uint16_t)(pcCursor - pcTokenStart), &ulTokenMask) == false)
         return false;
 
       ulMask |= ulTokenMask;
 
+      // Stop on the end of the string.
       if ((*pcCursor == '\0') || (*pcCursor == '\r'))
         break;
 
@@ -415,18 +420,22 @@ static bool ParseVcpDebugTargetMaskName(const char *pcText_, uint16_t usLen_, ui
   if ((pcText_ == NULL) || (pulMask_ == NULL))
     return false;
 
+  // Skip leading and trailing whitespace in the token.
   while ((usLen_ > 0U) && ((*pcText_ == ' ') || (*pcText_ == '\t')))
   {
     pcText_++;
     usLen_--;
   }
 
+  // Skip trailing whitespace in the token.
   while ((usLen_ > 0U) && ((pcText_[usLen_ - 1U] == ' ') || (pcText_[usLen_ - 1U] == '\t')))
     usLen_--;
 
+  // Reject empty tokens.
   if (usLen_ == 0U)
     return false;
 
+  // Match the token to target names.
   if ((usLen_ == strlen("system")) && (strncmp(pcText_, "system", usLen_) == 0))
     *pulMask_ = DBG_MASK_SYSTEM;
   else if ((usLen_ == strlen("comm")) && (strncmp(pcText_, "comm", usLen_) == 0))
@@ -464,7 +473,7 @@ static bool IsVcpDebugPrintfEnabled(VcpDebugLevelTypeDef eLevel_, uint32_t ulTar
     return false;
 
   // Higher numeric levels are more verbose.
-  if (eLevel_ > ulTheDebugLevel)
+  if (eLevel_ > eTheDebugLevel)
     return false;
 
   // Target must intersect the enabled target mask.
@@ -483,6 +492,7 @@ static bool IsVcpDebugPrintfEnabled(VcpDebugLevelTypeDef eLevel_, uint32_t ulTar
  */
 static const char *GetVcpDebugLevelString(VcpDebugLevelTypeDef eLevel_)
 {
+  // Check for valid debug level and return corresponding string.
   switch (eLevel_)
   {
     case LEVEL_ERROR:
@@ -514,6 +524,7 @@ static const char *GetVcpDebugLevelString(VcpDebugLevelTypeDef eLevel_)
  */
 static const char* GetVcpDebugMaskString(uint32_t ulMask_)
 {
+  // Check for valid debug target mask and return corresponding string.
   switch (ulMask_)
   {
     case DBG_MASK_NONE:
