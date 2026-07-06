@@ -1,6 +1,6 @@
 /******************************************************************************
  * @file    vcp_command.h
- * @brief   Virtual COM Port command interface.
+ * @brief   Virtual COM Port command processing and dispatching.
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
  * @course  University of Waterloo ECE498 Engineering Design Project

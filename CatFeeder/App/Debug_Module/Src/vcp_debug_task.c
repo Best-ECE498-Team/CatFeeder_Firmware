@@ -17,9 +17,9 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "vcp_command.h"
+#include "../Internal/vcp_command.h"
 #include "vcp_debug.h"
-#include "vcp_port.h"
+#include "../Internal/vcp_port.h"
 #include "cmsis_os.h"
 
 /*=============================================================================
@@ -55,10 +55,11 @@ void StartDebugCommTask(void *argument);
  */
 void StartDebugCommTask(void *argument)
 {
-  // Initialize VCP port and debug module
-  (void)VcpPort_Init();
+  (void)argument;
+  
+  // Initialize the VCP UART DMA transport
   VcpDebug_Init();
-
+  
   /* Infinite loop */
   for(;;)
   {

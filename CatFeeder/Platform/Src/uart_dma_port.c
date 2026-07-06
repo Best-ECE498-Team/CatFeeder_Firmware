@@ -5,7 +5,7 @@
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
  * @course  ECE 498 Engineering Design Project
  * @team    Team 53
- * @authors
+ * @authors Bowen Zheng
  *
  * @license MIT
  * Copyright (c) 2026 Team 53
@@ -17,7 +17,7 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "usart_dma_port.h"
+#include "uart_dma_port.h"
 
 /*=============================================================================
  * Private Macros

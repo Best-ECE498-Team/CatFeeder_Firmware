@@ -1,11 +1,11 @@
 /******************************************************************************
  * @file    vcp_types.h
- * @brief
+ * @brief   VCP command parsing macros and structures.
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
  * @course  University of Waterloo ECE498 Engineering Design Project
  * @team    Team 53
- * @authors
+ * @authors Bowen Zheng
  *
  * @license MIT
  * Copyright (c) 2026 Team 53
@@ -35,20 +35,26 @@ extern "C" {
 /*=============================================================================
  * Public Type Definitions
  *============================================================================*/
+/**
+ * @brief Structure of a parsed VCP command.
+ */
 typedef struct
 {
   // Command format: <module>.<action> [param=value] ...
   // Command example: cf debug.set level=error mask=system,comm
-  char* pcModule;                           /**< Module name for command filtering */
-  char* pcAction;                           /**< Command action */
+  char *pcModule;                           /**< Module name for command filtering */
+  char *pcAction;                           /**< Command action */
   uint8_t ucArgc;                           /**< Number of arguments */
-  char* pacArgv[VCP_DEBUG_CMD_MAX_ARGS];    /**< Argument strings */
+  char *pacArgv[VCP_DEBUG_CMD_MAX_ARGS];    /**< Argument strings */
 } VcpCommandTypeDef;
 
-// Command handler type and module registry entry definitions
+// Define pointer to command handler type and module registry entry definitions
 typedef bool (*VcpCmdHandlerTypeDef)(const VcpCommandTypeDef *pstCmd_);
 
-typedef struct
+/**
+ * @brief Module registry entry for VCP command dispatching.
+ */
+ typedef struct
 {
   const char *pcModule;             /**< Module name used for command dispatching */           
   VcpCmdHandlerTypeDef pfHandler;   /**< Command handler function pointer */

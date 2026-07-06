@@ -17,10 +17,10 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "vcp_command.h"
+#include "../Internal/vcp_command.h"
 #include "system_vcp_command.h"
 #include "vcp_debug.h"
-#include "vcp_port.h"
+#include "../Internal/vcp_port.h"
 #include <string.h>
 
 /*=============================================================================
@@ -38,16 +38,14 @@ static const VcpCommandModuleEntryTypeDef astVcpCmdModuleTable[] =
   { "system",  HandleSystemVcpCommand },
   // { "thermal", HandleThermalVcpCommand },
   // { "feeding", HandleFeedingVcpCommand },
-  // { "comm",    HandleCommVcpCommand },
-  { NULL,      NULL }
+  // { "comm",    HandleCommVcpCommand }
 };
 
 /*=============================================================================
  * Private Variables
  *============================================================================*/
-static char acTheVcpCommandBuf[VCP_COMMAND_BUF_SIZE];
+static char aucTheVcpCommandBuf[VCP_COMMAND_BUF_SIZE];
 static uint16_t usTheVcpCommandIndex;
-
 
 /*=============================================================================
  * Private Function Prototypes
@@ -75,8 +73,8 @@ void VcpCommand_HandleReceived(void)
     {
       if (usTheVcpCommandIndex > 0U)
       {
-        acTheVcpCommandBuf[usTheVcpCommandIndex] = '\0';
-        if (VcpCommand_ProcessLine(acTheVcpCommandBuf) == false)
+        aucTheVcpCommandBuf[usTheVcpCommandIndex] = '\0';
+        if (VcpCommand_ProcessLine(aucTheVcpCommandBuf) == false)
           DPRINTF_VCP("ERR unknown command\r\n");
 
         usTheVcpCommandIndex = 0U;
@@ -93,7 +91,7 @@ void VcpCommand_HandleReceived(void)
       continue;
     }
 
-    acTheVcpCommandBuf[usTheVcpCommandIndex] = (char)ucByte;
+    aucTheVcpCommandBuf[usTheVcpCommandIndex] = (char)ucByte;
     usTheVcpCommandIndex++;
   }
 }

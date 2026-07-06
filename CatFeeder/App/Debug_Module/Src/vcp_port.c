@@ -1,6 +1,6 @@
 /******************************************************************************
  * @file    vcp_port.c
- * @brief   VCP transport interface over the UART DMA port.
+ * @brief   VCP transport over the UART DMA port.
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
  * @course  ECE 498 Engineering Design Project
@@ -17,9 +17,9 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "vcp_port.h"
+#include "../Internal/vcp_port.h"
 #include "usart.h"
-#include "usart_dma_port.h"
+#include "uart_dma_port.h"
 #include <string.h>
 
 /*=============================================================================

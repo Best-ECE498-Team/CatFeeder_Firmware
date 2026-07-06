@@ -19,12 +19,19 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "adc.h"
+#include "crc.h"
 #include "dma.h"
+#include "i2c.h"
 #include "usart.h"
+#include "rtc.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "error_handler.h"
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -94,8 +101,33 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_LPUART1_UART_Init();
+  MX_RTC_Init();
+  MX_CRC_Init();
+  MX_ADC1_Init();
+  MX_I2C1_Init();
+  MX_UART4_Init();
+  MX_TIM1_Init();
+  MX_TIM8_Init();
+  MX_UART5_Init();
+  MX_I2C3_Init();
+  MX_I2C4_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
+  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
+  // Enable backup register access by disabling Back-up domain Protection
+  PWR->CR1 |= PWR_CR1_DBP;
 
+  // Print startup report
+  printf("*********************** CatFeeder Firmware Prototype Start Up Report *********************\r\n");
+  printf("* The System Reset Cause is: %s\n\r", GetResetCauseString());
+  PrintFaultBackupReport();
+  printf("* STM32G4xx HAL Initialized\r\n");
+  printf("* All Peripherals Initialized\r\n");
+  printf("* STM32G4xx HAL Version: %ld.%ld.%ld\r\n", 
+          (uint32_t)(HAL_GetHalVersion() >> 24), 
+          (uint32_t)((HAL_GetHalVersion() >> 16) & 0xFF), 
+          (uint32_t)((HAL_GetHalVersion() >> 8) & 0xFF));
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -109,7 +141,13 @@ int main(void)
   BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
 
   /* USER CODE BEGIN BSP */
-
+  printf("* BSP Initialized\r\n");
+  printf("* OS Kernel Initialized\r\n");
+  printf("* FreeRTOS Kernel Version: %ld.%ld.%ld\r\n", 
+          (uint32_t)tskKERNEL_VERSION_MAJOR, 
+          (uint32_t)tskKERNEL_VERSION_MINOR, 
+          (uint32_t)tskKERNEL_VERSION_BUILD);
+  printf("******************************************************************************************\r\n");
   /* USER CODE END BSP */
 
   /* Start scheduler */
@@ -119,6 +157,10 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HANDLE_CRITICAL_ERROR();
+
+  // Should not reach here, but if it does, disable interrupts and enter an infinite loop.
+  __disable_irq();
   while (1)
   {
 
@@ -142,12 +184,20 @@ void SystemClock_Config(void)
   */
   HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1_BOOST);
 
+  /** Configure LSE Drive Capability
+  */
+  HAL_PWR_EnableBkUpAccess();
+  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
+
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI
+                              |RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV4;
@@ -173,10 +223,16 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  HAL_RCC_MCOConfig(RCC_MCO_PG10, RCC_MCO1SOURCE_LSI, RCC_MCODIV_16);
 }
 
 /* USER CODE BEGIN 4 */
-
+// Retargets the C library printf function to the blocking LPUART1 transfer for early debugging.
+int _write(int file, char *ptr, int len)
+{
+  HAL_UART_Transmit(&hlpuart1, (uint8_t *)ptr, len, HAL_MAX_DELAY);
+  return len;
+}
 /* USER CODE END 4 */
 
 /**
@@ -221,7 +277,13 @@ void BSP_PB_Callback(Button_TypeDef Button)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
+
+  // Set a system fault flag for platform error.
+  FAULT_BKPR->SysFaultFlags |= SYSFAULT_HAL_ERROR;
+
+  HANDLE_CRITICAL_ERROR();
+
+  // Should not reach here, but if it does, disable interrupts and enter an infinite loop.
   __disable_irq();
   while (1)
   {
@@ -239,8 +301,14 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
+  HandleAssertFail(file, line); 
+
+  // Should not reach here, but if it does, disable interrupts and enter an infinite loop.
+  __disable_irq();
+  while (1)
+  {
+  }
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
