@@ -21,7 +21,7 @@
 #include "cmsis_os.h"
 #include "stm32g4xx_hal.h"
 #include "vcp_debug.h"
-#include "..\internal\thermal_adc_driver.h"
+#include "../Internal/thermal_adc_driver.h"
 
 /*=============================================================================
  * Private Macros

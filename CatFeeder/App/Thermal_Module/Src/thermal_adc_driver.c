@@ -18,7 +18,7 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "..\Internal\thermal_adc_driver.h"
+#include "../Internal/thermal_adc_driver.h"
 #include "adc.h"
 #include "tim.h"
 #include "error_handler.h"
@@ -30,7 +30,7 @@
  * Private Macros
  *============================================================================*/
 // Number of ADC1 channels used for thermal module 
-#define ADC1_CHANNEL_COUNT          ((ADC1->SQR1 & ADC_SQR1_L) + 1U) 
+#define ADC1_CHANNEL_COUNT          (((ADC1->SQR1 & ADC_SQR1_L) >> ADC_SQR1_L_Pos) + 1U)
 
 // DSP filters setting
 #define THERMAL_ADC_FRAME_SIZE      16U  // Averaging frame

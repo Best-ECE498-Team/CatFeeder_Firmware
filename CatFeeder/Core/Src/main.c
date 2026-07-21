@@ -116,7 +116,7 @@ int main(void)
   MX_TIM5_Init();
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
-  // Enable backup register access by disabling Back-up domain Protection
+  // Enable backup register access by disabling Back-up domain protection
   PWR->CR1 |= PWR_CR1_DBP;
 
   // Enable DWT cycle counter

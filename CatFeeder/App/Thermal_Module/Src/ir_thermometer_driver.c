@@ -17,7 +17,7 @@
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "..\Internal\ir_thermometer_driver.h"
+#include "../Internal/ir_thermometer_driver.h"
 #include "i2c.h"
 #include "error_handler.h"
 #include "vcp_debug.h"

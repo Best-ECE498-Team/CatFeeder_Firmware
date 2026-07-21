@@ -41,11 +41,11 @@ extern "C" {
 #endif 
 
 #ifndef IS_EVEN
-#define IS_EVEN(x_)          ((x_ & 1) == 0)
+#define IS_EVEN(x_)          ((((x_) & 1U) == 0U))
 #endif
 
 #ifndef IS_ODD
-#define IS_ODD(x_)           (x_ & 1)
+#define IS_ODD(x_)           ((((x_) & 1U) != 0U))
 #endif
 
 #ifndef IS_POWER_OF_TWO

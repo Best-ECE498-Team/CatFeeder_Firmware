@@ -18,8 +18,8 @@
  * Includes
  *============================================================================*/
 #include "thermal_vcp_command.h"
-#include "..\Internal\thermal_adc_driver.h"
-#include "..\Internal\ir_thermometer_driver.h"
+#include "../Internal/thermal_adc_driver.h"
+#include "../Internal/ir_thermometer_driver.h"
 #include "cmsis_os.h"
 #include "vcp_debug.h"
 #include <stdint.h>
