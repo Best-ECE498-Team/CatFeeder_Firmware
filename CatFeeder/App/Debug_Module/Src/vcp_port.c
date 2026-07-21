@@ -21,13 +21,20 @@
 #include "usart.h"
 #include "uart_dma_port.h"
 #include <string.h>
+#include "utilities.h"
 
 /*=============================================================================
  * Private Macros
  *============================================================================*/
-#define VCP_PORT_TX_BUF_SIZE  (512U)
+#define VCP_PORT_TX_BUF_SIZE  (1024U)
 #define VCP_PORT_RX_BUF_SIZE  (512U)
 
+#if !IS_POWER_OF_TWO(VCP_PORT_TX_BUF_SIZE)
+  #error "VCP_PORT_TX_BUF_SIZE must be a power of two"
+#endif
+#if !IS_POWER_OF_TWO(VCP_PORT_RX_BUF_SIZE)
+  #error "VCP_PORT_RX_BUF_SIZE must be a power of two"
+#endif
 /*=============================================================================
  * Private Type Definitions
  *============================================================================*/

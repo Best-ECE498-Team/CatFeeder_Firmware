@@ -114,12 +114,18 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM5_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   // Enable backup register access by disabling Back-up domain Protection
   PWR->CR1 |= PWR_CR1_DBP;
 
+  // Enable DWT cycle counter
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
   // Print startup report
-  printf("*********************** CatFeeder Firmware Prototype Start Up Report *********************\r\n");
+  printf("**************************** CatFeeder Firmware Start Up Report ***************************\r\n");
   printf("* The System Reset Cause is: %s\n\r", GetResetCauseString());
   PrintFaultBackupReport();
   printf("* STM32G4xx HAL Initialized\r\n");
@@ -147,6 +153,7 @@ int main(void)
           (uint32_t)tskKERNEL_VERSION_MAJOR, 
           (uint32_t)tskKERNEL_VERSION_MINOR, 
           (uint32_t)tskKERNEL_VERSION_BUILD);
+  printf("* Starting OS Kernal \r\n");
   printf("******************************************************************************************\r\n");
   /* USER CODE END BSP */
 

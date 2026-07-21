@@ -80,7 +80,7 @@ class SerialWorker:
             while not self._stop_event.is_set():
                 raw = self._serial.readline()
                 if raw:
-                    text = raw.decode("utf-8", errors="replace").rstrip()
+                    text = raw.decode("utf-8", errors="replace").strip("\r\n")
                     self._put_line("rx", text)
         except Exception as exc:
             self._put_line("error", str(exc))
@@ -161,17 +161,24 @@ class DebugApp(tk.Tk):
 
         self.log = tk.Listbox(
             log_frame,
-            font=("Consolas", 11),
+            font=("Consolas", 10),
             bg="#0f1419",
             fg="#dbe7ef",
             selectbackground="#26323d",
             selectforeground="#ffffff",
             activestyle="none",
+            selectmode="extended",
+            exportselection=False,
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
         )
         self.log.grid(row=0, column=0, sticky="nsew")
+        self.log.bind("<Control-c>", self.copy_selected_log_lines)
+        self.log.bind("<Control-C>", self.copy_selected_log_lines)
+        self.log.bind("<Control-a>", self.select_all_log_lines)
+        self.log.bind("<Control-A>", self.select_all_log_lines)
+        self.log.bind("<Button-3>", self.show_log_context_menu)
 
         scrollbar = ttk.Scrollbar(log_frame, command=self.log.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
@@ -186,6 +193,10 @@ class DebugApp(tk.Tk):
             "status": "#c3e88d",
             "error": "#ff7a90",
         }
+
+        self.log_menu = tk.Menu(self, tearoff=False)
+        self.log_menu.add_command(label="Copy", command=self.copy_selected_log_lines)
+        self.log_menu.add_command(label="Select All", command=self.select_all_log_lines)
 
         command_bar = ttk.Frame(self, padding=(10, 6, 10, 10))
         command_bar.grid(row=2, column=0, sticky="ew")
@@ -331,6 +342,29 @@ class DebugApp(tk.Tk):
         self.log.delete(0, "end")
         self.log_line_count = 0
 
+    def copy_selected_log_lines(self, _event=None):
+        selected_indices = self.log.curselection()
+        if not selected_indices:
+            return "break"
+
+        selected_lines = [self.log.get(index) for index in selected_indices]
+        self.clipboard_clear()
+        self.clipboard_append("\n".join(selected_lines))
+        return "break"
+
+    def select_all_log_lines(self, _event=None):
+        self.log.selection_set(0, "end")
+        return "break"
+
+    def show_log_context_menu(self, event):
+        row = self.log.nearest(event.y)
+        if row >= 0 and row not in self.log.curselection():
+            self.log.selection_clear(0, "end")
+            self.log.selection_set(row)
+
+        self.log_menu.tk_popup(event.x_root, event.y_root)
+        return "break"
+
     def _drain_queue(self):
         lines = []
         try:
@@ -354,11 +388,13 @@ class DebugApp(tk.Tk):
         if tag != "rx":
             return tag
 
-        if text.startswith("[ERROR]") or text.startswith("[ERROR "):
+        line = text.lstrip("\r\n")
+
+        if line.startswith("[ERROR]") or line.startswith("[ERROR "):
             return "rx_error"
-        if text.startswith("[WARN]") or text.startswith("[WARN "):
+        if line.startswith("[WARN]") or line.startswith("[WARN "):
             return "rx_warn"
-        if text.startswith("[DEBUG]") or text.startswith("[DEBUG "):
+        if line.startswith("[DEBUG]") or line.startswith("[DEBUG "):
             return "rx_debug"
         return "rx"
 

@@ -19,6 +19,9 @@
  *============================================================================*/
 #include "thermal_module.h"
 #include "cmsis_os.h"
+#include "stm32g4xx_hal.h"
+#include "vcp_debug.h"
+#include "..\internal\thermal_adc_driver.h"
 
 /*=============================================================================
  * Private Macros
@@ -33,7 +36,7 @@
 /*=============================================================================
  * Private Variables
  *============================================================================*/
-
+uint16_t au16AdcBuffer[7] = {0U};
 
 /*=============================================================================
  * Private Function Prototypes
@@ -70,10 +73,20 @@ void StartThermalTask(void *argument);
  */
 void StartThermalTask(void *argument)
 {
+  UNUSED(argument);
+  
+  if (StartThermalAdcSampling() == false)
+  {
+    DPRINTF_ERROR(DBG_MASK_THERMAL, "THERMAL_ADC_START_FAIL\r\n");
+    // Handle thermal ADC failure (TODO)
+  }
+  
+  IrThermometersInit();
 
   /* Infinite loop */
   for(;;)
   {
+    //PrintThermalAdcValues();
     osDelay(100);
   }
 }

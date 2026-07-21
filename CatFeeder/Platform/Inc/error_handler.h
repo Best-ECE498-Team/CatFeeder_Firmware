@@ -45,11 +45,11 @@ extern "C" {
 #define FAULT_BKPR                      ((volatile FaultBackupRegsTypeDef *)(TAMP_BASE + 0x100U))
 
 /**
-  * @brief      The assert_param macro is used for function's parameters check.
-  * @param[in]  expr_ If expr is false, it calls HandleAssertFail function
-  *             If expr is true, it returns no value.
-  * @retval     None
-  */
+ * @brief      The assert_param macro is used for function's parameters check.
+ * @param[in]  expr_ If expr is false, it calls HandleAssertFail function
+ *             If expr is true, it returns no value.
+ * @retval     None
+ */
 #define ASSERT(expr_)                                       \
   do                                                        \
   {                                                         \
@@ -57,12 +57,12 @@ extern "C" {
   } while (0)
 
 /**
-  * @brief   Capture the application call site and trigger the critical error handler, no return.
-  *
-  * @details This is for software-detected critical errors, not CPU exception entry.
-  *          It stores the current PC, LR, and SP into FAULT_BKPR before calling
-  *          HandleCriticalError(NULL, 0U).
-  */
+ * @brief   Capture the application call site and trigger the critical error handler, no return.
+ *
+ * @details This is for software-detected critical errors, not CPU exception entry.
+ *          It stores the current PC, LR, and SP into FAULT_BKPR before calling
+ *          HandleCriticalError(NULL, 0U).
+ */
 #define HANDLE_CRITICAL_ERROR()                                 \
   do                                                            \
   {                                                             \
@@ -86,8 +86,8 @@ extern "C" {
   } while (0)
 
 /**
-* @brief Load the SCB (System Control Block) fault registers into the fault backup structure for later analysis.
-*/
+ * @brief Load the SCB (System Control Block) fault registers into the fault backup structure for later analysis.
+ */
 #define BACKUP_SCB_FAULT_REGISTERS()               \
   do                                               \
   {                                                \
@@ -104,18 +104,19 @@ extern "C" {
  * Public Type Definitions
  *============================================================================*/
 /**
-  * @brief      Define backup registers for fault logging.
-  * 
-  * @details    This structure is used to store the CPU registers and fault status registers at the time of a fault. 
-  *             It is placed in the backup registers of the STM32G4 microcontroller to retain the information across system resets.
-  * 
-  * @attention  The structure must be aligned to 4 bytes and must not exceed max of 32 registers available in STM32G474ret 
-  *             Current address offset [0x100 , 0x140].
-  */
+ * @brief      Define backup registers for fault logging.
+ * 
+ * @details    This structure is used to store the CPU registers and fault status registers at the time of a fault. 
+ *             It is placed in the backup registers of the STM32G4 microcontroller to retain the information across system resets.
+ * 
+ * @attention  The structure must be aligned to 4 bytes and must not exceed max of 32 registers available in STM32G474ret 
+ *             Current address offset [0x100 , 0x140].
+ */
 typedef struct
 {
   //CPU registers at the time of fault
   __IO uint32_t MAGIC;          /**< Magic number,                               Address offset: 0x100 */
+  
   __IO uint32_t R0;             /**< Function argument 1,                        Address offset: 0x104 */
   __IO uint32_t R1;             /**< Function argument 2,                        Address offset: 0x108 */
   __IO uint32_t R2;             /**< Function argument 3,                        Address offset: 0x10C */
@@ -151,6 +152,10 @@ void HandleAssertFail(uint8_t *pucFile_, uint32_t ulLine_);
 void LoadCpuFaultRegisters(uint32_t *pulStackFrame_, uint32_t ulExcReturn_);
 const char* GetResetCauseString(void);
 void PrintFaultBackupReport(void);
+
+/**
+ * 
+ */
 
 #ifdef __cplusplus
 }

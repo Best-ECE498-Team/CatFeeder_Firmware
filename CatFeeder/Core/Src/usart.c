@@ -274,7 +274,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 
     /* UART4 DMA Init */
     /* UART4_RX Init */
-    hdma_uart4_rx.Instance = DMA1_Channel5;
+    hdma_uart4_rx.Instance = DMA2_Channel1;
     hdma_uart4_rx.Init.Request = DMA_REQUEST_UART4_RX;
     hdma_uart4_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
     hdma_uart4_rx.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -291,7 +291,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_uart4_rx);
 
     /* UART4_TX Init */
-    hdma_uart4_tx.Instance = DMA1_Channel6;
+    hdma_uart4_tx.Instance = DMA2_Channel2;
     hdma_uart4_tx.Init.Request = DMA_REQUEST_UART4_TX;
     hdma_uart4_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_uart4_tx.Init.PeriphInc = DMA_PINC_DISABLE;
