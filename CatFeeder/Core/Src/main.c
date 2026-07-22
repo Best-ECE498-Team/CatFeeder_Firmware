@@ -153,7 +153,7 @@ int main(void)
           (uint32_t)tskKERNEL_VERSION_MAJOR, 
           (uint32_t)tskKERNEL_VERSION_MINOR, 
           (uint32_t)tskKERNEL_VERSION_BUILD);
-  printf("* Starting OS Kernal \r\n");
+  printf("* Starting OS Kernel \r\n");
   printf("******************************************************************************************\r\n");
   /* USER CODE END BSP */
 
