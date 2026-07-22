@@ -253,7 +253,7 @@ bool HandleDebugVcpCommand(const VcpCommandTypeDef *pstCmd_)
         __DSB();
         __ISB();
 
-        // Trigger a undefined instruciton hardfault
+        // Trigger an undefined instruction hardfault
         __asm volatile ("udf #0");
 
         while (1)
