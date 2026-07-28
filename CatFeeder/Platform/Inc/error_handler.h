@@ -153,10 +153,7 @@ void LoadCpuFaultRegisters(uint32_t *pulStackFrame_, uint32_t ulExcReturn_);
 const char* GetResetCauseString(void);
 void PrintFaultBackupReport(void);
 
-/**
- * 
- */
-
+/* End of public API. */
 #ifdef __cplusplus
 }
 #endif
