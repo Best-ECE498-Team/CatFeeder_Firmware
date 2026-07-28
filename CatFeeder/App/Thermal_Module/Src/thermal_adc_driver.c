@@ -55,6 +55,7 @@
 #define ADC1_INVIL_MARGIN           15U
 #define NTC_ADC_OPEN_CIRCUIT_THRESH 4085U
 #define NTC_ADC_GND_SHORT_THRESH    10U
+
 /**
  * @brief     ADC1 thermal channel fields in DMA rank order.
  *
@@ -105,7 +106,7 @@ typedef struct
 /*=============================================================================
  * Private Variables
  *============================================================================*/
-// Circular dma buffer to hold the last 10 frames of ADC1 raw values for thermal sensors 
+// Circular dma buffer to hold the last THERMAL_ADC_FRAME_SIZE frames of ADC1 raw values for thermal sensors 
 static Adc1ValTypeDef astTheAdc1RawVals[THERMAL_ADC_FRAME_SIZE];
 
 // Last completed ADC1 raw DMA frame.
@@ -119,7 +120,8 @@ static Adc1FilterStateTypeDef stTheAdc1FilterState;
  * 
  * @details The table is generated based on the R25 and B25/85 parameters and provides a mapping from 
  *          ADC values to temperature in Celsius.
- *          The ADC values are based on a 12-bit ADC with a reference voltage of 3.3V and a voltage divider with a 10kΩ series resistor.
+ *          The ADC values are based on a 12-bit ADC with a reference voltage of 3.3V and a voltage divider 
+ *          with a 10kΩ series resistor.
  */
 static const NtcLookUpTableTypeDef astSunLordNtcLookUpTable[] =
 {
@@ -172,7 +174,8 @@ static const NtcLookUpTableTypeDef astSunLordNtcLookUpTable[] =
  * 
  * @details The table is generated based on the vender's lab RT measurements and provides a mapping 
  *          from ADC values to temperature in Celsius.
- *          The ADC values are based on a 12-bit ADC with a reference voltage of 3.3V and a voltage divider with a 10kΩ series resistor.
+ *          The ADC values are based on a 12-bit ADC with a reference voltage of 3.3V and a voltage divider 
+ *          with a 10kΩ series resistor.
  */
 static const NtcLookUpTableTypeDef astVishayNtcLookUpTable[] =
 {
@@ -243,7 +246,8 @@ static uint16_t GetVrefint_mV(void);
 /**
  * @brief   Start thermal ADC1 sampling
  * 
- * @details ADC sampling triggered by TIM6 TRGO at 1KHz, DMA buffer is circular and holds the last 10 frames of ADC values.
+ * @details ADC sampling triggered by TIM6 TRGO at 1KHz, DMA buffer is circular 
+ *          and holds the last 10 frames of ADC values.
  * 
  * @return  True if all tests passed
  */
