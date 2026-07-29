@@ -36,7 +36,7 @@
 #define THERMAL_ADC_FRAME_SIZE      16U  // Averaging frame
 #define THERMAL_ADC_AVG_SHIFT       4U   // log2(16) = 4
 // Fix point IIR filter parameters, cutoff frequency = 10Hz, sampling frequency = 1kHz.
-#define THERMAL_ADC_IIR_ALPHA_SHIFT 3U  // IIR alpha = 1/8 = 0.062 ~= alpha = 1 - e^(-2πfc*(1/fs) ) = 0.061
+#define THERMAL_ADC_IIR_ALPHA_SHIFT 4U  // IIR alpha = 1 - e^(-2πfc*(1/fs) ) = 0.061 ~= 1/16
 #define THERMAL_ADC_Q_SHIFT         8U  // Fractional bits used by the IIR accumulator
 
 #if !IS_POWER_OF_TWO(1U << THERMAL_ADC_IIR_ALPHA_SHIFT)
