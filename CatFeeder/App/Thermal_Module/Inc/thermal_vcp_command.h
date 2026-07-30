@@ -1,11 +1,11 @@
 /******************************************************************************
- * @file    ntc_thermistor_driver.c
- * @brief   
+ * @file    thermal_vcp_command.h
+ * @brief
  *
  * @project PawPlate - Intelligent Wet Cat Food Dispensing System
- * @course  ECE 498 Engineering Design Project
+ * @course  University of Waterloo ECE498 Engineering Design Project
  * @team    Team 53
- * @authors 
+ * @authors
  *
  * @license MIT
  * Copyright (c) 2026 Team 53
@@ -14,58 +14,41 @@
  *
  ******************************************************************************/
 
+#ifndef THERMAL_MODULE_INC_THERMAL_VCP_COMMAND_H_
+#define THERMAL_MODULE_INC_THERMAL_VCP_COMMAND_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*=============================================================================
  * Includes
  *============================================================================*/
-#include "ntc_thermistor_driver.h"
-
+#include <stdbool.h>  
+#include "vcp_types.h"
 
 /*=============================================================================
- * Private Macros
+ * Public Macros
  *============================================================================*/
 
 
 /*=============================================================================
- * Private Type Definitions
+ * Public Type Definitions
  *============================================================================*/
 
 
 /*=============================================================================
- * Private Variables
+ * Public Constants
  *============================================================================*/
 
 
 /*=============================================================================
- * Private Function Prototypes
+ * Public Function Prototypes
  *============================================================================*/
+bool HandleThermalVcpCommand(const VcpCommandTypeDef *pstCmd_);
 
+#ifdef __cplusplus
+}
+#endif
 
-/*=============================================================================
- * Public Function Definitions
- *============================================================================*/
-
-/**
- * @brief
- *
- * @details
- *
- * @param[in]
- * @param[out]
- *
- * @return
- */
-
-/*=============================================================================
- * Private Function Definitions
- *============================================================================*/
-
-/**
- * @brief
- *
- * @details
- *
- * @param[in]
- * @param[out]
- *
- * @return
- */
+#endif /* THERMAL_MODULE_INC_THERMAL_VCP_COMMAND_H_ */

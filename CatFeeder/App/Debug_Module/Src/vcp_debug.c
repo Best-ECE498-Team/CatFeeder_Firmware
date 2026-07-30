@@ -71,11 +71,10 @@ void VcpDebug_Init(void)
 }
 
 /**
- * @brief Filtered printf-style debug output over the VCP DMA port.
+ * @brief     Filtered printf-style debug output over the VCP DMA port.
  *
- * @details
- * Prints only when eLevel_ is at or below the configured debug level and
- * ulTargetMask_ intersects the configured target mask.
+ * @details   Prints only when eLevel_ is at or below the configured debug level and
+ *            ulTargetMask_ intersects the configured target mask.
  *
  * @param[in] eLevel_       Message debug level.
  * @param[in] ulTargetMask_ Message target mask.
@@ -237,25 +236,43 @@ bool HandleDebugVcpCommand(const VcpCommandTypeDef *pstCmd_)
     return bHandled;
   }
 
-  // Handle "debug.hardfault" command
-  if (IsVcpTokenEqual(pstCmd_->pcAction, "hardfault") != false)
+  // Handle "debug.trigger" commands
+  if (IsVcpTokenEqual(pstCmd_->pcAction, "trigger") != false)
   {
-    DPRINTF_VCP("OK triggering hardfault\r\n");
-
-    SCB->SHCSR &= ~(SCB_SHCSR_MEMFAULTENA_Msk |
-                  SCB_SHCSR_BUSFAULTENA_Msk |
-                  SCB_SHCSR_USGFAULTENA_Msk);
-    __DSB();
-    __ISB();
-
-    // Trigger a undefined instruciton hardfault
-    __asm volatile ("udf #0");
-
-    while (1)
+    // Loop through each argument key
+    for (ucIndex = 0U; ucIndex < pstCmd_->ucArgc; ucIndex++)
     {
+      // Handle "debug.trigger hardfault" command
+      if (IsVcpTokenEqual(pstCmd_->pacArgv[ucIndex], "hardfault") != false)
+      {
+        DPRINTF_VCP("OK triggering hardfault\r\n");
+        bHandled = true;
+        SCB->SHCSR &= ~(SCB_SHCSR_MEMFAULTENA_Msk |
+                      SCB_SHCSR_BUSFAULTENA_Msk |
+                      SCB_SHCSR_USGFAULTENA_Msk);
+        __DSB();
+        __ISB();
+
+        // Trigger an undefined instruction hardfault
+        __asm volatile ("udf #0");
+
+        while (1)
+        {
+        }
+
+        return true;
+      }
+      // Handle "debug.trigger assertfail" command
+      else if (IsVcpTokenEqual(pstCmd_->pacArgv[ucIndex], "assertfail") != false)
+      {
+        bHandled = true;
+        ASSERT(false);
+        return true;
+      }
+
     }
 
-    return true;
+    return bHandled;
   }
 
   // Handle "debug.help" command
@@ -266,7 +283,8 @@ bool HandleDebugVcpCommand(const VcpCommandTypeDef *pstCmd_)
     DPRINTF_VCP("    <level>: error, warn, info, debug, trace\r\n");
     DPRINTF_VCP("    <mask>: comma-separated list of system,comm,thermal,feeding\r\n");
     DPRINTF_VCP("  debug.get level mask\r\n");
-    DPRINTF_VCP("  debug.hardfault\r\n");
+    DPRINTF_VCP("  debug.trigger hardfault\r\n");
+    DPRINTF_VCP("  debug.trigger assertfail\r\n");
     DPRINTF_VCP("  debug.help\r\n");
     bHandled = true;
 

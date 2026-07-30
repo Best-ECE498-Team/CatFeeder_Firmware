@@ -59,6 +59,7 @@ void StartDebugCommTask(void *argument)
   
   // Initialize the VCP UART DMA transport
   VcpDebug_Init();
+  DPRINTF_VCP("VCP DEBUG PORT Initialized\r\n");
   
   /* Infinite loop */
   for(;;)

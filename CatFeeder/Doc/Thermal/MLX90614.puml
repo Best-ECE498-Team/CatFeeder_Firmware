@@ -1,0 +1,45 @@
+@startuml
+title MLX90614 RTOS Interrupt-Driven Temperature Read Flow
+
+start
+:Configure I2C peripharal clock;
+:Configure I2C peripharal registers, enable ISR;
+:Thermal task starts;
+:Initialize next wake time;
+
+repeat
+  :Wait until next thermal period;
+  :Clear IR sensor event flags;
+
+  fork
+    :Start I2C1 non-blocking read;
+    :Read heater MLX90614;
+  fork again
+    :Start I2C3 non-blocking read;
+    :Read cooler 1 MLX90614;
+  fork again
+    :Start I2C4 non-blocking read;
+    :Read cooler 2 MLX90614;
+  end fork
+
+  :Thermal task blocks on RTOS event flags;
+
+  if (All I2C transfers complete before timeout?) then (Yes)
+    :I2C completion callbacks set event flags;
+    :Validate PEC / received data;
+    :Convert raw values to degrees Celsius;
+    :Update shared thermal sensor data;
+    :Notify driver
+  else (No)
+    :Set IR sensor fault flag;
+    :Use last valid temperature or enter safe state;
+    :Disable affected thermal output if required;
+  endif
+
+repeat while (System remains in normal operation?) is (Yes)
+
+:Disable thermal outputs;
+:Report system fault;
+stop
+
+@enduml

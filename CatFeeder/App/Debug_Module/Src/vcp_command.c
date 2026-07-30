@@ -22,7 +22,7 @@
 #include "vcp_debug.h"
 #include "../Internal/vcp_port.h"
 #include <string.h>
-
+#include "thermal_vcp_command.h"
 /*=============================================================================
  * Private Macros
  *============================================================================*/
@@ -36,7 +36,7 @@ static const VcpCommandModuleEntryTypeDef astVcpCmdModuleTable[] =
 {
   { "debug",   HandleDebugVcpCommand  },
   { "system",  HandleSystemVcpCommand },
-  // { "thermal", HandleThermalVcpCommand },
+  { "thermal", HandleThermalVcpCommand },
   // { "feeding", HandleFeedingVcpCommand },
   // { "comm",    HandleCommVcpCommand }
 };

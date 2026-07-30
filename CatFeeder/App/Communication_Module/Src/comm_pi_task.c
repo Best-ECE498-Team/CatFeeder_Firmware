@@ -51,16 +51,10 @@ void StartPiCommTask(void *argument);
  */
 void StartPiCommTask(void *argument)
 {
-  uint32_t ulCount = 0;
+
   /* Infinite loop */
   for (;;)
   {
-    DPRINTF_ERROR(DBG_MASK_FEEDING, "Error From PiCommTask Count: %u\r\n", ulCount);
-    DPRINTF_WARN(DBG_MASK_COMM, "Warn From PiCommTask Count: %u\r\n", ulCount);
-    DPRINTF_INFO(DBG_MASK_SYSTEM, "Info From PiCommTask Count: %u\r\n", ulCount);
-    DPRINTF_DEBUG(DBG_MASK_THERMAL, "Debug From PiCommTask Count: %u\r\n", ulCount);
-    DPRINTF_TRACE(DBG_MASK_SYSTEM, "Trace From PiCommTask Count: %u\r\n", ulCount);
-    ulCount++;
     osDelay(1000);
   }
 

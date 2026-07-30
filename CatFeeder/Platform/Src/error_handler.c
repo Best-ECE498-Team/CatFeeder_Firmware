@@ -18,6 +18,7 @@
  * Includes
  *============================================================================*/
 #include "error_handler.h"
+#include "usart.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -26,6 +27,8 @@
  *============================================================================*/
 #define IS_MEMORY_FAULT_ADDRESS_VALID() (((FAULT_BKPR->CFSR & SCB_CFSR_MMARVALID_Msk) != 0U))
 #define IS_BUS_FAULT_ADDRESS_VALID()    (((FAULT_BKPR->CFSR & SCB_CFSR_BFARVALID_Msk) != 0U))
+#define ASSERT_FAIL_PRINT_BUF_SIZE       (160U)
+#define EMERGENCY_UART_FLAG_TIMEOUT      (1000000U)
 
 /*=============================================================================
  * Private Type Definitions
@@ -120,24 +123,31 @@ static inline void ClearFaultBackupRegisters(void);
  * Public Function Definitions
  *============================================================================*/
 /**
-  * @brief     Handle assert failure by logging the location and triggering a system reset.
-  * 
-  * @param[in]  pucFile_  Pointer to the file name string
-  * @param[in]  ulLine_   Line number where the assert failed
-  */
+ * @brief     Handle assert failure by logging the location and triggering a system reset.
+ * 
+ * @param[in]  pucFile_  Pointer to the file name string
+ * @param[in]  ulLine_   Line number where the assert failed
+ */
 void HandleAssertFail(uint8_t *pucFile_, uint32_t ulLine_)
 {
+  uint32_t ulDelayCycles = 10000000U;
+
   // (TODO) Disable all actuators and power electronics to prevent further execution and potential damage
 
-  // Disable interrupts to prevent further execution.
+  // Fatal logging owns the debug UART from here until reset.
   __disable_irq(); 
 
-  // Log the assert failure location
-  printf("[ERROR] [SYSTEM] ASSERT FAILED: file %s, line %lu\r\n", 
-          pucFile_, (uint32_t)ulLine_);
-
-  // Set a system fault flag for assert failure
   FAULT_BKPR->SysFaultFlags |= SYSFAULT_ASSERT_FAIL;
+  FAULT_BKPR->MAGIC = FAULT_BACKUP_MAGIC_NUMBER;
+
+  printf("[ERROR] [SYSTEM] ASSERT FAILED: file %s, line %lu\r\n", 
+          (const char *)pucFile_, (uint32_t)ulLine_);
+
+  // Delay 1 second
+  while (ulDelayCycles-- > 0U)
+  {
+    __NOP();
+  }
 
   // Trigger a software system reset
   __DSB();
@@ -152,14 +162,14 @@ void HandleAssertFail(uint8_t *pucFile_, uint32_t ulLine_)
 }
 
 /**
-  * @brief     Handle critical error then trigger a system reset, no return.
-  * 
-  * @attention This function is called with argments in ARMv7-M Thumb "startup_stm32g474retx.s", find more detail there.
-  *            Application code should not call this directly, use HANDLE_CRITICAL_ERROR() macro.
-  * 
-  * @param[in]  pulStackFrame_  Pointer to the exception stack frame
-  * @param[in]  ulExcReturn_    Exception return value
-  */
+ * @brief     Handle critical error then trigger a system reset, no return.
+ * 
+ * @attention This function is called with argments in ARMv7-M Thumb "startup_stm32g474retx.s", find more detail there.
+ *            Application code should not call this directly, use HANDLE_CRITICAL_ERROR() macro.
+ * 
+ * @param[in]  pulStackFrame_  Pointer to the exception stack frame
+ * @param[in]  ulExcReturn_    Exception return value
+ */
 __attribute__((noreturn)) 
 void HandleCriticalError(uint32_t *pulStackFrame_, uint32_t ulExcReturn_)
 {
@@ -177,6 +187,13 @@ void HandleCriticalError(uint32_t *pulStackFrame_, uint32_t ulExcReturn_)
   if (FAULT_BKPR->SysFaultFlags != 0)
     FAULT_BKPR->MAGIC = FAULT_BACKUP_MAGIC_NUMBER;
 
+  // Delay 1 second
+  uint32_t ulDelayCycles = 10000000; 
+  while (ulDelayCycles-- > 0U)
+  {
+    __NOP();
+  }
+
   // Trigger a software system reset
   __DSB();
   __ISB();
@@ -191,13 +208,13 @@ void HandleCriticalError(uint32_t *pulStackFrame_, uint32_t ulExcReturn_)
 }
 
 /**
-  * @brief      Load CPU fault registers from the exception stack pointer and exception return value 
-  *             into the fault backup structure.
-  *             Reference PM0214 programming manual Figure 12. Cortex-M4 stack frame layout.
-  * 
-  * @param[in]  pulStackFrame_  Pointer to the exception stack frame
-  * @param[in]  ulExcReturn_    Exception return value
-  */
+ * @brief      Load CPU fault registers from the exception stack pointer and exception return value 
+ *             into the fault backup structure.
+ *             Reference PM0214 programming manual Figure 12. Cortex-M4 stack frame layout.
+ * 
+ * @param[in]  pulStackFrame_  Pointer to the exception stack frame
+ * @param[in]  ulExcReturn_    Exception return value
+ */
 void LoadCpuFaultRegisters(uint32_t *pulStackFrame_, uint32_t ulExcReturn_)
 {
   // Only accepting exception stack frame.
@@ -224,11 +241,11 @@ void LoadCpuFaultRegisters(uint32_t *pulStackFrame_, uint32_t ulExcReturn_)
 }
 
 /**
-  * @brief     Obtain the system reset cause as an ASCII-printable name string
-  *            from a reset cause type
-  * 
-  * @return    A ASCII name string describing the system reset cause
-  */
+ * @brief     Obtain the system reset cause as an ASCII-printable name string
+ *            from a reset cause type
+ * 
+ * @return    A ASCII name string describing the system reset cause
+ */
 const char* GetResetCauseString(void)
 {
   ResetCauseTypeDef eResetCause = GetResetCause();
@@ -268,8 +285,8 @@ const char* GetResetCauseString(void)
 }
 
 /**
-  * @brief  Print the backed-up fault register report over blocking printf().
-  */
+ * @brief  Print the backed-up fault register report over blocking printf().
+ */
 void PrintFaultBackupReport(void)
 {
   // Print normal startup when no valid backup exists.
@@ -358,10 +375,10 @@ void PrintFaultBackupReport(void)
  * Private Function Definitions
  *============================================================================*/
 /**
-  * @brief      Print decoded xPSR fields from a backed-up xPSR value.
-  * 
-  * @param[in]  ulXpsr_ Backed-up xPSR value
-  */
+ * @brief      Print decoded xPSR fields from a backed-up xPSR value.
+ * 
+ * @param[in]  ulXpsr_ Backed-up xPSR value
+ */
 static void PrintXpsrDetails(uint32_t ulXpsr_)
 {
   xPSR_Type stXpsr;
@@ -441,13 +458,13 @@ static void PrintXpsrDetails(uint32_t ulXpsr_)
 }
 
 /**
-  * @brief      Print every active flag from a fault decode table.
-  * 
-  * @param[in]  paucTitle_  Report section title
-  * @param[in]  ulRegValue_ Register or flag value to decode
-  * @param[in]  pastTable_  Decode table
-  * @param[in]  ulTableCount_ Number of entries in the decode table
-  */
+ * @brief      Print every active flag from a fault decode table.
+ * 
+ * @param[in]  paucTitle_  Report section title
+ * @param[in]  ulRegValue_ Register or flag value to decode
+ * @param[in]  pastTable_  Decode table
+ * @param[in]  ulTableCount_ Number of entries in the decode table
+ */
 static void PrintFaultDecodeTable(const char *paucTitle_, 
                                   uint32_t ulRegValue_,
                                   const FaultDecodeEntryTypeDef *pastTable_,
@@ -475,10 +492,10 @@ static void PrintFaultDecodeTable(const char *paucTitle_,
 }
 
 /**
-  * @brief   Obtain the STM32 system reset cause
-  * 
-  * @return  The system reset cause
-  */
+ * @brief   Obtain the STM32 system reset cause
+ * 
+ * @return  The system reset cause
+ */
 ResetCauseTypeDef GetResetCause(void)
 {
   ResetCauseTypeDef eResetCause = RESET_CAUSE_UNKNOWN;

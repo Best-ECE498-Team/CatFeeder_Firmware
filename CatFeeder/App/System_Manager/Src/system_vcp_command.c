@@ -53,11 +53,10 @@
  */
 bool HandleSystemVcpCommand(const VcpCommandTypeDef *pstCmd_)
 {
-  if (pstCmd_ == NULL)
+  if ((pstCmd_ == NULL) || (pstCmd_->pcAction == NULL))
     return false;
 
-
-  return false; 
+  return false;
 }
 
 /*=============================================================================
